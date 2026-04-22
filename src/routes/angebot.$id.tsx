@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
-import { getRecognition, parseTranscript } from "@/lib/voice";
 import { generateQuotePdf } from "@/lib/pdf";
+import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import {
   ArrowLeft,
   ImagePlus,
@@ -26,6 +26,7 @@ import {
   Plus,
   Printer,
   Save,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
