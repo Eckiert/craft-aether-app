@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { formatEUR, type Quote } from "@/lib/types";
+import { formatEUR, STATUS_LABELS, STATUS_STYLES, type Quote, type QuoteStatus } from "@/lib/types";
 import { Plus, FileText, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -50,6 +50,7 @@ function IndexPage() {
         project_name: "Neues Projekt",
         items: [],
         total: 0,
+        status: "draft",
       })
       .select()
       .single();
@@ -117,8 +118,15 @@ function IndexPage() {
                 params={{ id: q.id }}
                 className="block"
               >
-                <div className="text-xs text-muted-foreground font-mono">
-                  {new Date(q.created_at).toLocaleDateString("de-DE")}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs text-muted-foreground font-mono">
+                    {new Date(q.created_at).toLocaleDateString("de-DE")}
+                  </div>
+                  <span
+                    className={`text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full border ${STATUS_STYLES[(q.status ?? "draft") as QuoteStatus]}`}
+                  >
+                    {STATUS_LABELS[(q.status ?? "draft") as QuoteStatus]}
+                  </span>
                 </div>
                 <h3 className="mt-2 font-medium truncate">{q.project_name}</h3>
                 <p className="text-sm text-muted-foreground truncate">{q.customer_name}</p>
