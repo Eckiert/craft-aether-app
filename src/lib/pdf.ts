@@ -63,8 +63,8 @@ export function generateQuotePdf(quote: Quote, openPrint = true) {
   // Items table header
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.setFillColor(0);
-  doc.setTextColor(255);
+  doc.setFillColor(0, 0, 0);
+  doc.setTextColor(255, 255, 255);
   doc.rect(margin, y, pageWidth - margin * 2, 8, "F");
   doc.text("Beschreibung", margin + 2, y + 5.5);
   doc.text("Menge", pageWidth - margin - 70, y + 5.5, { align: "right" });

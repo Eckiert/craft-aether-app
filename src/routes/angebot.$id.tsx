@@ -114,7 +114,7 @@ function QuoteEditor() {
         customer_address: quote.customer_address,
         project_name: quote.project_name,
         notes: quote.notes,
-        items: quote.items as unknown as object,
+        items: quote.items as unknown as never,
         total,
       })
       .eq("id", quote.id);
