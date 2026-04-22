@@ -86,7 +86,7 @@ export function generateQuotePdf(quote: Quote, openPrint = true) {
       y = margin;
     }
     doc.text(descLines, margin + 2, y + 4);
-    doc.text(String(item.quantity), pageWidth - margin - 70, y + 4, { align: "right" });
+  doc.text(String(item.quantity), pageWidth - margin - 70, y + 4, { align: "right" });
     doc.text(item.unit, pageWidth - margin - 50, y + 4);
     doc.text(formatEUR(item.price), pageWidth - margin - 22, y + 4, { align: "right" });
     doc.text(formatEUR(lineTotal), pageWidth - margin - 2, y + 4, { align: "right" });
