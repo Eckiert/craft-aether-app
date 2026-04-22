@@ -339,21 +339,41 @@ function QuoteEditor() {
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Kunde</h2>
           <div className="space-y-2">
             <Label htmlFor="cn">Name</Label>
-            <Input
-              id="cn"
-              value={quote.customer_name}
-              onChange={(e) => update({ customer_name: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="cn"
+                value={quote.customer_name}
+                onChange={(e) => update({ customer_name: e.target.value })}
+              />
+              <MicButton
+                fieldKey="customer_name"
+                onText={(t) => update({ customer_name: t })}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="ca">Adresse</Label>
-            <Textarea
-              id="ca"
-              rows={3}
-              placeholder="Straße&#10;PLZ Ort"
-              value={quote.customer_address ?? ""}
-              onChange={(e) => update({ customer_address: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Textarea
+                id="ca"
+                rows={3}
+                placeholder="Straße&#10;PLZ Ort"
+                value={quote.customer_address ?? ""}
+                onChange={(e) => update({ customer_address: e.target.value })}
+              />
+              <MicButton
+                fieldKey="customer_address"
+                append
+                onText={(t) =>
+                  update({
+                    customer_address: quote.customer_address
+                      ? quote.customer_address + "\n" + t
+                      : t,
+                  })
+                }
+                className="self-start"
+              />
+            </div>
           </div>
         </section>
 
@@ -361,20 +381,36 @@ function QuoteEditor() {
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Projekt</h2>
           <div className="space-y-2">
             <Label htmlFor="pn">Bezeichnung</Label>
-            <Input
-              id="pn"
-              value={quote.project_name}
-              onChange={(e) => update({ project_name: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="pn"
+                value={quote.project_name}
+                onChange={(e) => update({ project_name: e.target.value })}
+              />
+              <MicButton
+                fieldKey="project_name"
+                onText={(t) => update({ project_name: t })}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Anmerkungen</Label>
-            <Textarea
-              id="notes"
-              rows={3}
-              value={quote.notes ?? ""}
-              onChange={(e) => update({ notes: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Textarea
+                id="notes"
+                rows={3}
+                value={quote.notes ?? ""}
+                onChange={(e) => update({ notes: e.target.value })}
+              />
+              <MicButton
+                fieldKey="notes"
+                append
+                onText={(t) =>
+                  update({ notes: quote.notes ? quote.notes + " " + t : t })
+                }
+                className="self-start"
+              />
+            </div>
           </div>
         </section>
       </div>
