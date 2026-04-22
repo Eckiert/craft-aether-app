@@ -89,6 +89,60 @@ function QuoteEditor() {
 
   const total = useMemo(() => (quote ? calcTotal(quote.items) : 0), [quote]);
 
+  // Sign URLs for any item photos so we can preview them
+  useEffect(() => {
+    if (!quote) return;
+    const paths = quote.items.map((i) => i.photo_path).filter((p): p is string => !!p);
+    if (paths.length === 0) return;
+    let active = true;
+    (async () => {
+      const entries: [string, string][] = [];
+      for (const p of paths) {
+        if (photoUrls[p]) {
+          entries.push([p, photoUrls[p]]);
+          continue;
+        }
+        const { data } = await supabase.storage
+          .from("quote-photos")
+          .createSignedUrl(p, 60 * 60);
+        if (data?.signedUrl) entries.push([p, data.signedUrl]);
+      }
+      if (active && entries.length) {
+        setPhotoUrls((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote?.items.map((i) => i.photo_path).join("|")]);
+
+  const uploadPhoto = async (itemId: string, file: File) => {
+    if (!user || !quote) return;
+    setUploadingId(itemId);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/${quote.id}/${itemId}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("quote-photos")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    setUploadingId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    // remove old photo if any
+    const old = quote.items.find((i) => i.id === itemId)?.photo_path;
+    if (old) await supabase.storage.from("quote-photos").remove([old]);
+    updateItem(itemId, { photo_path: path });
+    toast.success("Foto hinzugefügt");
+  };
+
+  const removePhoto = async (itemId: string) => {
+    const path = quote?.items.find((i) => i.id === itemId)?.photo_path;
+    if (path) await supabase.storage.from("quote-photos").remove([path]);
+    updateItem(itemId, { photo_path: null });
+  };
+
   const update = (patch: Partial<Quote>) => {
     setQuote((q) => (q ? { ...q, ...patch } : q));
   };
