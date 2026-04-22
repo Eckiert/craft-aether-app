@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranscribeRouteImport } from './routes/api.transcribe'
+import { Route as ApiParsePositionsRouteImport } from './routes/api.parse-positions'
 import { Route as AngebotIdRouteImport } from './routes/angebot.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -29,6 +30,11 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiParsePositionsRoute = ApiParsePositionsRouteImport.update({
+  id: '/api/parse-positions',
+  path: '/api/parse-positions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AngebotIdRoute = AngebotIdRouteImport.update({
   id: '/angebot/$id',
   path: '/angebot/$id',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
+  '/api/parse-positions': typeof ApiParsePositionsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
+  '/api/parse-positions': typeof ApiParsePositionsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,38 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
+  '/api/parse-positions': typeof ApiParsePositionsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/angebot/$id' | '/api/transcribe'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/angebot/$id'
+    | '/api/parse-positions'
+    | '/api/transcribe'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/angebot/$id' | '/api/transcribe'
-  id: '__root__' | '/' | '/login' | '/angebot/$id' | '/api/transcribe'
+  to:
+    | '/'
+    | '/login'
+    | '/angebot/$id'
+    | '/api/parse-positions'
+    | '/api/transcribe'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/angebot/$id'
+    | '/api/parse-positions'
+    | '/api/transcribe'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   AngebotIdRoute: typeof AngebotIdRoute
+  ApiParsePositionsRoute: typeof ApiParsePositionsRoute
   ApiTranscribeRoute: typeof ApiTranscribeRoute
 }
 
@@ -92,6 +118,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/parse-positions': {
+      id: '/api/parse-positions'
+      path: '/api/parse-positions'
+      fullPath: '/api/parse-positions'
+      preLoaderRoute: typeof ApiParsePositionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/angebot/$id': {
       id: '/angebot/$id'
       path: '/angebot/$id'
@@ -106,8 +139,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   AngebotIdRoute: AngebotIdRoute,
+  ApiParsePositionsRoute: ApiParsePositionsRoute,
   ApiTranscribeRoute: ApiTranscribeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
