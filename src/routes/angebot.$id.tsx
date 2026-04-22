@@ -401,7 +401,6 @@ function QuoteEditor() {
               />
               <MicButton
                 fieldKey="customer_address"
-                append
                 onText={(t) =>
                   update({
                     customer_address: quote.customer_address
