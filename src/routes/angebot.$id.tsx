@@ -389,13 +389,65 @@ function QuoteEditor() {
                 <div className="col-span-10 md:col-span-1 text-right font-medium tabular-nums">
                   {formatEUR(item.quantity * item.price)}
                 </div>
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="col-span-2 md:col-span-1 justify-self-end p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
-                  aria-label="Position löschen"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="col-span-2 md:col-span-1 justify-self-end flex gap-1">
+                  <input
+                    ref={(el) => {
+                      fileInputs.current[item.id] = el;
+                    }}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadPhoto(item.id, f);
+                      e.target.value = "";
+                    }}
+                  />
+                  <button
+                    onClick={() => fileInputs.current[item.id]?.click()}
+                    className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+                    aria-label="Foto hinzufügen"
+                    disabled={uploadingId === item.id}
+                  >
+                    {uploadingId === item.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ImagePlus className="h-4 w-4" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+                    aria-label="Position löschen"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                {item.photo_path && (
+                  <div className="col-span-12 mt-2">
+                    <div className="relative inline-block">
+                      {photoUrls[item.photo_path] ? (
+                        <img
+                          src={photoUrls[item.photo_path]}
+                          alt={`Foto ${idx + 1}`}
+                          className="h-32 w-32 object-cover rounded-lg border border-border"
+                        />
+                      ) : (
+                        <div className="h-32 w-32 rounded-lg border border-border bg-muted flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => removePhoto(item.id)}
+                        className="absolute -top-2 -right-2 p-1 rounded-full bg-background border border-border shadow hover:bg-muted"
+                        aria-label="Foto entfernen"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
