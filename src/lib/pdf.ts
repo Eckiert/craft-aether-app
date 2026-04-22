@@ -1,7 +1,27 @@
 import jsPDF from "jspdf";
 import { formatEUR, type Quote } from "./types";
+import { supabase } from "@/integrations/supabase/client";
 
-export function generateQuotePdf(quote: Quote, openPrint = true) {
+async function fetchPhotoDataUrl(path: string): Promise<string | null> {
+  try {
+    const { data } = await supabase.storage
+      .from("quote-photos")
+      .createSignedUrl(path, 60 * 60);
+    if (!data?.signedUrl) return null;
+    const res = await fetch(data.signedUrl);
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function generateQuotePdf(quote: Quote, openPrint = true) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 18;
