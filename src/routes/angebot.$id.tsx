@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
-import { getRecognition, parseTranscript } from "@/lib/voice";
 import { generateQuotePdf } from "@/lib/pdf";
+import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import {
   ArrowLeft,
   ImagePlus,
@@ -26,6 +26,7 @@ import {
   Plus,
   Printer,
   Save,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -54,13 +55,14 @@ function QuoteEditor() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<ReturnType<typeof getRecognition>>(null);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
-  const [fieldListening, setFieldListening] = useState<string | null>(null);
-  const fieldRecRef = useRef<ReturnType<typeof getRecognition>>(null);
+  const [walkTalkOpen, setWalkTalkOpen] = useState(false);
+  const [processingDictation, setProcessingDictation] = useState(false);
+  const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
+  const fieldApplyRef = useRef<((text: string) => void) | null>(null);
+  const recorder = useAudioRecorder();
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -196,99 +198,135 @@ function QuoteEditor() {
     generateQuotePdf({ ...quote, total }, true);
   };
 
-  const startListening = () => {
-    const rec = getRecognition();
-    if (!rec) {
-      toast.error("Spracherkennung wird in diesem Browser nicht unterstützt. Bitte Chrome verwenden.");
+  const transcribeBlob = async (blob: Blob): Promise<string> => {
+    const fd = new FormData();
+    fd.append("audio", blob, "audio.webm");
+    const res = await fetch("/api/transcribe", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Transkription fehlgeschlagen");
+    return (data.text ?? "").trim();
+  };
+
+  // Walk-&-Talk: record → transcribe → AI extracts multiple positions
+  const startWalkTalk = async () => {
+    setWalkTalkOpen(true);
+    await recorder.start();
+    if (recorder.error) toast.error(recorder.error);
+  };
+
+  const finishWalkTalk = async () => {
+    const blob = await recorder.stop();
+    if (!blob) {
+      setWalkTalkOpen(false);
       return;
     }
-    recognitionRef.current = rec;
-    setListening(true);
-    rec.onresult = (e: any) => {
-      const transcript: string = e.results[0][0].transcript;
-      const parsed = parseTranscript(transcript);
-      addItem(newItem(parsed));
-      toast.success(`Erkannt: "${transcript}"`);
-    };
-    rec.onerror = (e: any) => {
-      toast.error(`Fehler: ${e.error ?? "unbekannt"}`);
-      setListening(false);
-    };
-    rec.onend = () => setListening(false);
+    setProcessingDictation(true);
     try {
-      rec.start();
-    } catch {
-      setListening(false);
+      const text = await transcribeBlob(blob);
+      if (!text) {
+        toast.error("Keine Sprache erkannt");
+        return;
+      }
+      const res = await fetch("/api/parse-positions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "AI-Verarbeitung fehlgeschlagen");
+        return;
+      }
+      const items: Array<{ description: string; quantity: number; unit: string; price: number }> =
+        data.items ?? [];
+      if (items.length === 0) {
+        toast.warning("Keine Positionen erkannt");
+      } else {
+        setQuote((q) =>
+          q ? { ...q, items: [...q.items, ...items.map((it) => newItem(it))] } : q,
+        );
+        if (data.notes) {
+          setQuote((q) =>
+            q ? { ...q, notes: q.notes ? q.notes + "\n" + data.notes : data.notes } : q,
+          );
+        }
+        toast.success(`${items.length} Position${items.length === 1 ? "" : "en"} erkannt`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler");
+    } finally {
+      setProcessingDictation(false);
+      setWalkTalkOpen(false);
     }
   };
 
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setListening(false);
+  const cancelWalkTalk = () => {
+    recorder.cancel();
+    setWalkTalkOpen(false);
   };
 
-  const startFieldDictation = (
+  // Single-field dictation (Kunde, Adresse, Projekt, Anmerkungen)
+  const startFieldDictation = async (
     fieldKey: string,
     apply: (text: string) => void,
-    opts?: { append?: boolean },
   ) => {
-    const rec = getRecognition();
-    if (!rec) {
-      toast.error("Spracherkennung wird in diesem Browser nicht unterstützt. Bitte Chrome verwenden.");
-      return;
-    }
-    fieldRecRef.current = rec;
-    setFieldListening(fieldKey);
-    rec.onresult = (e: any) => {
-      const transcript: string = e.results[0][0].transcript;
-      const cleaned = transcript.trim();
-      if (!cleaned) return;
-      const finalText = opts?.append ? cleaned : cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-      apply(finalText);
-    };
-    rec.onerror = (e: any) => {
-      toast.error(`Fehler: ${e.error ?? "unbekannt"}`);
-      setFieldListening(null);
-    };
-    rec.onend = () => setFieldListening(null);
-    try {
-      rec.start();
-    } catch {
-      setFieldListening(null);
+    setActiveFieldKey(fieldKey);
+    fieldApplyRef.current = apply;
+    await recorder.start();
+    if (recorder.error) {
+      toast.error(recorder.error);
+      setActiveFieldKey(null);
     }
   };
 
-  const stopFieldDictation = () => {
-    fieldRecRef.current?.stop();
-    setFieldListening(null);
+  const stopFieldDictation = async () => {
+    const apply = fieldApplyRef.current;
+    fieldApplyRef.current = null;
+    const blob = await recorder.stop();
+    setActiveFieldKey(null);
+    if (!blob || !apply) return;
+    setProcessingDictation(true);
+    try {
+      const text = await transcribeBlob(blob);
+      if (text) apply(text);
+      else toast.error("Keine Sprache erkannt");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler");
+    } finally {
+      setProcessingDictation(false);
+    }
   };
 
   const MicButton = ({
     fieldKey,
     onText,
-    append,
     className,
   }: {
     fieldKey: string;
     onText: (text: string) => void;
-    append?: boolean;
     className?: string;
   }) => {
-    const active = fieldListening === fieldKey;
+    const active = activeFieldKey === fieldKey;
+    const busy = processingDictation && activeFieldKey === null;
     return (
       <button
         type="button"
-        onClick={() =>
-          active ? stopFieldDictation() : startFieldDictation(fieldKey, onText, { append })
-        }
+        disabled={busy || (activeFieldKey !== null && !active)}
+        onClick={() => (active ? stopFieldDictation() : startFieldDictation(fieldKey, onText))}
         className={
-          "p-2 rounded-md hover:bg-muted transition-colors " +
+          "p-2 rounded-md hover:bg-muted transition-colors disabled:opacity-50 " +
           (active ? "text-destructive" : "text-muted-foreground") +
           (className ? " " + className : "")
         }
         aria-label={active ? "Aufnahme stoppen" : "Diktieren"}
       >
-        {active ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
+        {active ? (
+          <MicOff className="h-4 w-4 animate-pulse" />
+        ) : busy ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Mic className="h-4 w-4" />
+        )}
       </button>
     );
   };
@@ -363,7 +401,6 @@ function QuoteEditor() {
               />
               <MicButton
                 fieldKey="customer_address"
-                append
                 onText={(t) =>
                   update({
                     customer_address: quote.customer_address
@@ -404,7 +441,6 @@ function QuoteEditor() {
               />
               <MicButton
                 fieldKey="notes"
-                append
                 onText={(t) =>
                   update({ notes: quote.notes ? quote.notes + " " + t : t })
                 }
@@ -420,21 +456,15 @@ function QuoteEditor() {
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Positionen</h2>
           <div className="flex gap-2">
             <Button
-              variant={listening ? "destructive" : "outline"}
+              variant="default"
               size="sm"
-              onClick={listening ? stopListening : startListening}
+              onClick={startWalkTalk}
+              disabled={walkTalkOpen || processingDictation}
+              className="bg-gradient-to-r from-primary to-primary/80"
             >
-              {listening ? (
-                <>
-                  <MicOff className="h-4 w-4 mr-2 animate-pulse" /> Stop
-                </>
-              ) : (
-                <>
-                  <Mic className="h-4 w-4 mr-2" /> Sprache
-                </>
-              )}
+              <Sparkles className="h-4 w-4 mr-2" /> Walk &amp; Talk
             </Button>
-            <Button size="sm" onClick={() => addItem()}>
+            <Button size="sm" variant="outline" onClick={() => addItem()}>
               <Plus className="h-4 w-4 mr-2" /> Position
             </Button>
           </div>
@@ -568,6 +598,52 @@ function QuoteEditor() {
       <p className="mt-4 text-xs text-muted-foreground text-right">
         Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmer).
       </p>
+
+      {walkTalkOpen && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-card border border-border rounded-2xl p-8 text-center space-y-6 shadow-2xl">
+            <div>
+              <h3 className="text-xl font-semibold mb-2">Walk &amp; Talk</h3>
+              <p className="text-sm text-muted-foreground">
+                Beschreibe alle Positionen frei – z. B. <em>"Wandanstrich Wohnzimmer 25 Quadratmeter, weiße Dispersion, 18,90 pro Quadratmeter. Dann sechs Steckdosen tauschen, 35 Euro pro Stück."</em>
+              </p>
+            </div>
+
+            <div className="flex flex-col items-center gap-4 py-4">
+              {processingDictation ? (
+                <>
+                  <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">KI extrahiert Positionen…</p>
+                </>
+              ) : recorder.isRecording ? (
+                <>
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-destructive/30 rounded-full animate-ping" />
+                    <div className="relative h-20 w-20 rounded-full bg-destructive flex items-center justify-center">
+                      <Mic className="h-10 w-10 text-destructive-foreground" />
+                    </div>
+                  </div>
+                  <p className="text-sm font-medium">Aufnahme läuft…</p>
+                </>
+              ) : (
+                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+              )}
+            </div>
+
+            <div className="flex gap-2 justify-center">
+              <Button variant="ghost" onClick={cancelWalkTalk} disabled={processingDictation}>
+                Abbrechen
+              </Button>
+              <Button
+                onClick={finishWalkTalk}
+                disabled={!recorder.isRecording || processingDictation}
+              >
+                <MicOff className="h-4 w-4 mr-2" /> Fertig &amp; auswerten
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
