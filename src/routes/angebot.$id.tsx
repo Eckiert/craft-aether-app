@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { calcTotal, formatEUR, UNITS, type Quote, type QuoteItem } from "@/lib/types";
+import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
 import { getRecognition, parseTranscript } from "@/lib/voice";
 import { generateQuotePdf } from "@/lib/pdf";
 import {
@@ -115,6 +115,7 @@ function QuoteEditor() {
         project_name: quote.project_name,
         notes: quote.notes,
         items: quote.items as unknown as never,
+        status: quote.status,
         total,
       })
       .eq("id", quote.id);
