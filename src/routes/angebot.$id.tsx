@@ -59,6 +59,8 @@ function QuoteEditor() {
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [fieldListening, setFieldListening] = useState<string | null>(null);
+  const fieldRecRef = useRef<ReturnType<typeof getRecognition>>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -225,6 +227,72 @@ function QuoteEditor() {
     setListening(false);
   };
 
+  const startFieldDictation = (
+    fieldKey: string,
+    apply: (text: string) => void,
+    opts?: { append?: boolean },
+  ) => {
+    const rec = getRecognition();
+    if (!rec) {
+      toast.error("Spracherkennung wird in diesem Browser nicht unterstützt. Bitte Chrome verwenden.");
+      return;
+    }
+    fieldRecRef.current = rec;
+    setFieldListening(fieldKey);
+    rec.onresult = (e: any) => {
+      const transcript: string = e.results[0][0].transcript;
+      const cleaned = transcript.trim();
+      if (!cleaned) return;
+      const finalText = opts?.append ? cleaned : cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+      apply(finalText);
+    };
+    rec.onerror = (e: any) => {
+      toast.error(`Fehler: ${e.error ?? "unbekannt"}`);
+      setFieldListening(null);
+    };
+    rec.onend = () => setFieldListening(null);
+    try {
+      rec.start();
+    } catch {
+      setFieldListening(null);
+    }
+  };
+
+  const stopFieldDictation = () => {
+    fieldRecRef.current?.stop();
+    setFieldListening(null);
+  };
+
+  const MicButton = ({
+    fieldKey,
+    onText,
+    append,
+    className,
+  }: {
+    fieldKey: string;
+    onText: (text: string) => void;
+    append?: boolean;
+    className?: string;
+  }) => {
+    const active = fieldListening === fieldKey;
+    return (
+      <button
+        type="button"
+        onClick={() =>
+          active ? stopFieldDictation() : startFieldDictation(fieldKey, onText, { append })
+        }
+        className={
+          "p-2 rounded-md hover:bg-muted transition-colors " +
+          (active ? "text-destructive" : "text-muted-foreground") +
+          (className ? " " + className : "")
+        }
+        aria-label={active ? "Aufnahme stoppen" : "Diktieren"}
+      >
+        {active ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
+      </button>
+    );
+  };
+
   if (authLoading || loading || !quote) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -271,21 +339,41 @@ function QuoteEditor() {
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Kunde</h2>
           <div className="space-y-2">
             <Label htmlFor="cn">Name</Label>
-            <Input
-              id="cn"
-              value={quote.customer_name}
-              onChange={(e) => update({ customer_name: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="cn"
+                value={quote.customer_name}
+                onChange={(e) => update({ customer_name: e.target.value })}
+              />
+              <MicButton
+                fieldKey="customer_name"
+                onText={(t) => update({ customer_name: t })}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="ca">Adresse</Label>
-            <Textarea
-              id="ca"
-              rows={3}
-              placeholder="Straße&#10;PLZ Ort"
-              value={quote.customer_address ?? ""}
-              onChange={(e) => update({ customer_address: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Textarea
+                id="ca"
+                rows={3}
+                placeholder="Straße&#10;PLZ Ort"
+                value={quote.customer_address ?? ""}
+                onChange={(e) => update({ customer_address: e.target.value })}
+              />
+              <MicButton
+                fieldKey="customer_address"
+                append
+                onText={(t) =>
+                  update({
+                    customer_address: quote.customer_address
+                      ? quote.customer_address + "\n" + t
+                      : t,
+                  })
+                }
+                className="self-start"
+              />
+            </div>
           </div>
         </section>
 
@@ -293,20 +381,36 @@ function QuoteEditor() {
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Projekt</h2>
           <div className="space-y-2">
             <Label htmlFor="pn">Bezeichnung</Label>
-            <Input
-              id="pn"
-              value={quote.project_name}
-              onChange={(e) => update({ project_name: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="pn"
+                value={quote.project_name}
+                onChange={(e) => update({ project_name: e.target.value })}
+              />
+              <MicButton
+                fieldKey="project_name"
+                onText={(t) => update({ project_name: t })}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="notes">Anmerkungen</Label>
-            <Textarea
-              id="notes"
-              rows={3}
-              value={quote.notes ?? ""}
-              onChange={(e) => update({ notes: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Textarea
+                id="notes"
+                rows={3}
+                value={quote.notes ?? ""}
+                onChange={(e) => update({ notes: e.target.value })}
+              />
+              <MicButton
+                fieldKey="notes"
+                append
+                onText={(t) =>
+                  update({ notes: quote.notes ? quote.notes + " " + t : t })
+                }
+                className="self-start"
+              />
+            </div>
           </div>
         </section>
       </div>
