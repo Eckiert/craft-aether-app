@@ -227,6 +227,72 @@ function QuoteEditor() {
     setListening(false);
   };
 
+  const startFieldDictation = (
+    fieldKey: string,
+    apply: (text: string) => void,
+    opts?: { append?: boolean },
+  ) => {
+    const rec = getRecognition();
+    if (!rec) {
+      toast.error("Spracherkennung wird in diesem Browser nicht unterstützt. Bitte Chrome verwenden.");
+      return;
+    }
+    fieldRecRef.current = rec;
+    setFieldListening(fieldKey);
+    rec.onresult = (e: any) => {
+      const transcript: string = e.results[0][0].transcript;
+      const cleaned = transcript.trim();
+      if (!cleaned) return;
+      const finalText = opts?.append ? cleaned : cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+      apply(finalText);
+    };
+    rec.onerror = (e: any) => {
+      toast.error(`Fehler: ${e.error ?? "unbekannt"}`);
+      setFieldListening(null);
+    };
+    rec.onend = () => setFieldListening(null);
+    try {
+      rec.start();
+    } catch {
+      setFieldListening(null);
+    }
+  };
+
+  const stopFieldDictation = () => {
+    fieldRecRef.current?.stop();
+    setFieldListening(null);
+  };
+
+  const MicButton = ({
+    fieldKey,
+    onText,
+    append,
+    className,
+  }: {
+    fieldKey: string;
+    onText: (text: string) => void;
+    append?: boolean;
+    className?: string;
+  }) => {
+    const active = fieldListening === fieldKey;
+    return (
+      <button
+        type="button"
+        onClick={() =>
+          active ? stopFieldDictation() : startFieldDictation(fieldKey, onText, { append })
+        }
+        className={
+          "p-2 rounded-md hover:bg-muted transition-colors " +
+          (active ? "text-destructive" : "text-muted-foreground") +
+          (className ? " " + className : "")
+        }
+        aria-label={active ? "Aufnahme stoppen" : "Diktieren"}
+      >
+        {active ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
+      </button>
+    );
+  };
+
   if (authLoading || loading || !quote) {
     return (
       <div className="min-h-screen flex items-center justify-center">
