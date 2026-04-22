@@ -55,13 +55,14 @@ function QuoteEditor() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<ReturnType<typeof getRecognition>>(null);
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
-  const [fieldListening, setFieldListening] = useState<string | null>(null);
-  const fieldRecRef = useRef<ReturnType<typeof getRecognition>>(null);
+  const [walkTalkOpen, setWalkTalkOpen] = useState(false);
+  const [processingDictation, setProcessingDictation] = useState(false);
+  const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
+  const fieldApplyRef = useRef<((text: string) => void) | null>(null);
+  const recorder = useAudioRecorder();
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
