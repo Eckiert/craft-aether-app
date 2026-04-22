@@ -19,6 +19,7 @@ import { getRecognition, parseTranscript } from "@/lib/voice";
 import { generateQuotePdf } from "@/lib/pdf";
 import {
   ArrowLeft,
+  ImagePlus,
   Loader2,
   Mic,
   MicOff,
@@ -26,6 +27,7 @@ import {
   Printer,
   Save,
   Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,6 +56,9 @@ function QuoteEditor() {
   const [saving, setSaving] = useState(false);
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<ReturnType<typeof getRecognition>>(null);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -83,6 +88,60 @@ function QuoteEditor() {
   }, [id, user, navigate]);
 
   const total = useMemo(() => (quote ? calcTotal(quote.items) : 0), [quote]);
+
+  // Sign URLs for any item photos so we can preview them
+  useEffect(() => {
+    if (!quote) return;
+    const paths = quote.items.map((i) => i.photo_path).filter((p): p is string => !!p);
+    if (paths.length === 0) return;
+    let active = true;
+    (async () => {
+      const entries: [string, string][] = [];
+      for (const p of paths) {
+        if (photoUrls[p]) {
+          entries.push([p, photoUrls[p]]);
+          continue;
+        }
+        const { data } = await supabase.storage
+          .from("quote-photos")
+          .createSignedUrl(p, 60 * 60);
+        if (data?.signedUrl) entries.push([p, data.signedUrl]);
+      }
+      if (active && entries.length) {
+        setPhotoUrls((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote?.items.map((i) => i.photo_path).join("|")]);
+
+  const uploadPhoto = async (itemId: string, file: File) => {
+    if (!user || !quote) return;
+    setUploadingId(itemId);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${user.id}/${quote.id}/${itemId}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("quote-photos")
+      .upload(path, file, { upsert: true, contentType: file.type });
+    setUploadingId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    // remove old photo if any
+    const old = quote.items.find((i) => i.id === itemId)?.photo_path;
+    if (old) await supabase.storage.from("quote-photos").remove([old]);
+    updateItem(itemId, { photo_path: path });
+    toast.success("Foto hinzugefügt");
+  };
+
+  const removePhoto = async (itemId: string) => {
+    const path = quote?.items.find((i) => i.id === itemId)?.photo_path;
+    if (path) await supabase.storage.from("quote-photos").remove([path]);
+    updateItem(itemId, { photo_path: null });
+  };
 
   const update = (patch: Partial<Quote>) => {
     setQuote((q) => (q ? { ...q, ...patch } : q));
@@ -330,13 +389,65 @@ function QuoteEditor() {
                 <div className="col-span-10 md:col-span-1 text-right font-medium tabular-nums">
                   {formatEUR(item.quantity * item.price)}
                 </div>
-                <button
-                  onClick={() => removeItem(item.id)}
-                  className="col-span-2 md:col-span-1 justify-self-end p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
-                  aria-label="Position löschen"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="col-span-2 md:col-span-1 justify-self-end flex gap-1">
+                  <input
+                    ref={(el) => {
+                      fileInputs.current[item.id] = el;
+                    }}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadPhoto(item.id, f);
+                      e.target.value = "";
+                    }}
+                  />
+                  <button
+                    onClick={() => fileInputs.current[item.id]?.click()}
+                    className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+                    aria-label="Foto hinzufügen"
+                    disabled={uploadingId === item.id}
+                  >
+                    {uploadingId === item.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ImagePlus className="h-4 w-4" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+                    aria-label="Position löschen"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                {item.photo_path && (
+                  <div className="col-span-12 mt-2">
+                    <div className="relative inline-block">
+                      {photoUrls[item.photo_path] ? (
+                        <img
+                          src={photoUrls[item.photo_path]}
+                          alt={`Foto ${idx + 1}`}
+                          className="h-32 w-32 object-cover rounded-lg border border-border"
+                        />
+                      ) : (
+                        <div className="h-32 w-32 rounded-lg border border-border bg-muted flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                      <button
+                        onClick={() => removePhoto(item.id)}
+                        className="absolute -top-2 -right-2 p-1 rounded-full bg-background border border-border shadow hover:bg-muted"
+                        aria-label="Foto entfernen"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

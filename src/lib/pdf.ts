@@ -1,7 +1,27 @@
 import jsPDF from "jspdf";
 import { formatEUR, type Quote } from "./types";
+import { supabase } from "@/integrations/supabase/client";
 
-export function generateQuotePdf(quote: Quote, openPrint = true) {
+async function fetchPhotoDataUrl(path: string): Promise<string | null> {
+  try {
+    const { data } = await supabase.storage
+      .from("quote-photos")
+      .createSignedUrl(path, 60 * 60);
+    if (!data?.signedUrl) return null;
+    const res = await fetch(data.signedUrl);
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function generateQuotePdf(quote: Quote, openPrint = true) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 18;
@@ -132,6 +152,41 @@ export function generateQuotePdf(quote: Quote, openPrint = true) {
     doc.setFontSize(10);
     const notesLines = doc.splitTextToSize(quote.notes, pageWidth - margin * 2);
     doc.text(notesLines, margin, y);
+  }
+
+  // Photos appendix
+  const itemsWithPhotos = quote.items
+    .map((it, idx) => ({ it, idx }))
+    .filter(({ it }) => !!it.photo_path);
+  if (itemsWithPhotos.length > 0) {
+    doc.addPage();
+    y = margin;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Fotos", margin, y);
+    y += 8;
+    const maxW = pageWidth - margin * 2;
+    const maxH = 90;
+    for (const { it, idx } of itemsWithPhotos) {
+      const dataUrl = await fetchPhotoDataUrl(it.photo_path!);
+      if (!dataUrl) continue;
+      if (y + maxH + 14 > 285) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      const caption = `#${idx + 1} ${it.description || ""}`.trim();
+      doc.text(doc.splitTextToSize(caption, maxW), margin, y);
+      y += 5;
+      try {
+        const fmt = dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
+        doc.addImage(dataUrl, fmt, margin, y, maxW * 0.6, maxH, undefined, "FAST");
+      } catch {
+        // skip image if jsPDF can't decode it
+      }
+      y += maxH + 8;
+    }
   }
 
   if (openPrint) {
