@@ -198,99 +198,135 @@ function QuoteEditor() {
     generateQuotePdf({ ...quote, total }, true);
   };
 
-  const startListening = () => {
-    const rec = getRecognition();
-    if (!rec) {
-      toast.error("Spracherkennung wird in diesem Browser nicht unterstützt. Bitte Chrome verwenden.");
+  const transcribeBlob = async (blob: Blob): Promise<string> => {
+    const fd = new FormData();
+    fd.append("audio", blob, "audio.webm");
+    const res = await fetch("/api/transcribe", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Transkription fehlgeschlagen");
+    return (data.text ?? "").trim();
+  };
+
+  // Walk-&-Talk: record → transcribe → AI extracts multiple positions
+  const startWalkTalk = async () => {
+    setWalkTalkOpen(true);
+    await recorder.start();
+    if (recorder.error) toast.error(recorder.error);
+  };
+
+  const finishWalkTalk = async () => {
+    const blob = await recorder.stop();
+    if (!blob) {
+      setWalkTalkOpen(false);
       return;
     }
-    recognitionRef.current = rec;
-    setListening(true);
-    rec.onresult = (e: any) => {
-      const transcript: string = e.results[0][0].transcript;
-      const parsed = parseTranscript(transcript);
-      addItem(newItem(parsed));
-      toast.success(`Erkannt: "${transcript}"`);
-    };
-    rec.onerror = (e: any) => {
-      toast.error(`Fehler: ${e.error ?? "unbekannt"}`);
-      setListening(false);
-    };
-    rec.onend = () => setListening(false);
+    setProcessingDictation(true);
     try {
-      rec.start();
-    } catch {
-      setListening(false);
+      const text = await transcribeBlob(blob);
+      if (!text) {
+        toast.error("Keine Sprache erkannt");
+        return;
+      }
+      const res = await fetch("/api/parse-positions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "AI-Verarbeitung fehlgeschlagen");
+        return;
+      }
+      const items: Array<{ description: string; quantity: number; unit: string; price: number }> =
+        data.items ?? [];
+      if (items.length === 0) {
+        toast.warning("Keine Positionen erkannt");
+      } else {
+        setQuote((q) =>
+          q ? { ...q, items: [...q.items, ...items.map((it) => newItem(it))] } : q,
+        );
+        if (data.notes) {
+          setQuote((q) =>
+            q ? { ...q, notes: q.notes ? q.notes + "\n" + data.notes : data.notes } : q,
+          );
+        }
+        toast.success(`${items.length} Position${items.length === 1 ? "" : "en"} erkannt`);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler");
+    } finally {
+      setProcessingDictation(false);
+      setWalkTalkOpen(false);
     }
   };
 
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setListening(false);
+  const cancelWalkTalk = () => {
+    recorder.cancel();
+    setWalkTalkOpen(false);
   };
 
-  const startFieldDictation = (
+  // Single-field dictation (Kunde, Adresse, Projekt, Anmerkungen)
+  const startFieldDictation = async (
     fieldKey: string,
     apply: (text: string) => void,
-    opts?: { append?: boolean },
   ) => {
-    const rec = getRecognition();
-    if (!rec) {
-      toast.error("Spracherkennung wird in diesem Browser nicht unterstützt. Bitte Chrome verwenden.");
-      return;
-    }
-    fieldRecRef.current = rec;
-    setFieldListening(fieldKey);
-    rec.onresult = (e: any) => {
-      const transcript: string = e.results[0][0].transcript;
-      const cleaned = transcript.trim();
-      if (!cleaned) return;
-      const finalText = opts?.append ? cleaned : cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-      apply(finalText);
-    };
-    rec.onerror = (e: any) => {
-      toast.error(`Fehler: ${e.error ?? "unbekannt"}`);
-      setFieldListening(null);
-    };
-    rec.onend = () => setFieldListening(null);
-    try {
-      rec.start();
-    } catch {
-      setFieldListening(null);
+    setActiveFieldKey(fieldKey);
+    fieldApplyRef.current = apply;
+    await recorder.start();
+    if (recorder.error) {
+      toast.error(recorder.error);
+      setActiveFieldKey(null);
     }
   };
 
-  const stopFieldDictation = () => {
-    fieldRecRef.current?.stop();
-    setFieldListening(null);
+  const stopFieldDictation = async () => {
+    const apply = fieldApplyRef.current;
+    fieldApplyRef.current = null;
+    const blob = await recorder.stop();
+    setActiveFieldKey(null);
+    if (!blob || !apply) return;
+    setProcessingDictation(true);
+    try {
+      const text = await transcribeBlob(blob);
+      if (text) apply(text);
+      else toast.error("Keine Sprache erkannt");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler");
+    } finally {
+      setProcessingDictation(false);
+    }
   };
 
   const MicButton = ({
     fieldKey,
     onText,
-    append,
     className,
   }: {
     fieldKey: string;
     onText: (text: string) => void;
-    append?: boolean;
     className?: string;
   }) => {
-    const active = fieldListening === fieldKey;
+    const active = activeFieldKey === fieldKey;
+    const busy = processingDictation && activeFieldKey === null;
     return (
       <button
         type="button"
-        onClick={() =>
-          active ? stopFieldDictation() : startFieldDictation(fieldKey, onText, { append })
-        }
+        disabled={busy || (activeFieldKey !== null && !active)}
+        onClick={() => (active ? stopFieldDictation() : startFieldDictation(fieldKey, onText))}
         className={
-          "p-2 rounded-md hover:bg-muted transition-colors " +
+          "p-2 rounded-md hover:bg-muted transition-colors disabled:opacity-50 " +
           (active ? "text-destructive" : "text-muted-foreground") +
           (className ? " " + className : "")
         }
         aria-label={active ? "Aufnahme stoppen" : "Diktieren"}
       >
-        {active ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
+        {active ? (
+          <MicOff className="h-4 w-4 animate-pulse" />
+        ) : busy ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Mic className="h-4 w-4" />
+        )}
       </button>
     );
   };
