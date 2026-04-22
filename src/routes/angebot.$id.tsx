@@ -56,6 +56,9 @@ function QuoteEditor() {
   const [saving, setSaving] = useState(false);
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<ReturnType<typeof getRecognition>>(null);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
