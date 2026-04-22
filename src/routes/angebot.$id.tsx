@@ -19,6 +19,7 @@ import { getRecognition, parseTranscript } from "@/lib/voice";
 import { generateQuotePdf } from "@/lib/pdf";
 import {
   ArrowLeft,
+  ImagePlus,
   Loader2,
   Mic,
   MicOff,
@@ -26,6 +27,7 @@ import {
   Printer,
   Save,
   Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
