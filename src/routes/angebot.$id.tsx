@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { calcTotal, formatEUR, UNITS, type Quote, type QuoteItem } from "@/lib/types";
+import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
 import { getRecognition, parseTranscript } from "@/lib/voice";
 import { generateQuotePdf } from "@/lib/pdf";
 import {
@@ -115,6 +115,7 @@ function QuoteEditor() {
         project_name: quote.project_name,
         notes: quote.notes,
         items: quote.items as unknown as never,
+        status: quote.status,
         total,
       })
       .eq("id", quote.id);
@@ -182,7 +183,20 @@ function QuoteEditor() {
         >
           <ArrowLeft className="h-4 w-4" /> Übersicht
         </Link>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <Select
+            value={quote.status ?? "draft"}
+            onValueChange={(v) => update({ status: v as QuoteStatus })}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(STATUS_LABELS) as QuoteStatus[]).map((s) => (
+                <SelectItem key={s} value={s}>{STATUS_LABELS[s]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline" onClick={() => save()} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Speichern

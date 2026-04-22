@@ -23,6 +23,7 @@ export type Database = {
           items: Json
           notes: string | null
           project_name: string
+          status: string
           total: number
           updated_at: string
           user_id: string
@@ -35,6 +36,7 @@ export type Database = {
           items?: Json
           notes?: string | null
           project_name: string
+          status?: string
           total?: number
           updated_at?: string
           user_id: string
@@ -47,6 +49,7 @@ export type Database = {
           items?: Json
           notes?: string | null
           project_name?: string
+          status?: string
           total?: number
           updated_at?: string
           user_id?: string
