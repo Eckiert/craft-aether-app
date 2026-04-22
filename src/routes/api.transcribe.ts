@@ -14,8 +14,8 @@ export const Route = createFileRoute("/api/transcribe")({
           }
 
           const incoming = await request.formData();
-          const audio = incoming.get("audio");
-          if (!(audio instanceof File) && !(audio instanceof Blob)) {
+          const audio = incoming.get("audio") as Blob | null;
+          if (!audio) {
             return new Response(
               JSON.stringify({ error: "Audio-Datei fehlt" }),
               { status: 400, headers: { "Content-Type": "application/json" } },
