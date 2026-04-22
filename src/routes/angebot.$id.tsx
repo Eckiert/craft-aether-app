@@ -456,21 +456,15 @@ function QuoteEditor() {
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Positionen</h2>
           <div className="flex gap-2">
             <Button
-              variant={listening ? "destructive" : "outline"}
+              variant="default"
               size="sm"
-              onClick={listening ? stopListening : startListening}
+              onClick={startWalkTalk}
+              disabled={walkTalkOpen || processingDictation}
+              className="bg-gradient-to-r from-primary to-primary/80"
             >
-              {listening ? (
-                <>
-                  <MicOff className="h-4 w-4 mr-2 animate-pulse" /> Stop
-                </>
-              ) : (
-                <>
-                  <Mic className="h-4 w-4 mr-2" /> Sprache
-                </>
-              )}
+              <Sparkles className="h-4 w-4 mr-2" /> Walk &amp; Talk
             </Button>
-            <Button size="sm" onClick={() => addItem()}>
+            <Button size="sm" variant="outline" onClick={() => addItem()}>
               <Plus className="h-4 w-4 mr-2" /> Position
             </Button>
           </div>
