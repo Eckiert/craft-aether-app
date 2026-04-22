@@ -154,6 +154,41 @@ export async function generateQuotePdf(quote: Quote, openPrint = true) {
     doc.text(notesLines, margin, y);
   }
 
+  // Photos appendix
+  const itemsWithPhotos = quote.items
+    .map((it, idx) => ({ it, idx }))
+    .filter(({ it }) => !!it.photo_path);
+  if (itemsWithPhotos.length > 0) {
+    doc.addPage();
+    y = margin;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Fotos", margin, y);
+    y += 8;
+    const maxW = pageWidth - margin * 2;
+    const maxH = 90;
+    for (const { it, idx } of itemsWithPhotos) {
+      const dataUrl = await fetchPhotoDataUrl(it.photo_path!);
+      if (!dataUrl) continue;
+      if (y + maxH + 14 > 285) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      const caption = `#${idx + 1} ${it.description || ""}`.trim();
+      doc.text(doc.splitTextToSize(caption, maxW), margin, y);
+      y += 5;
+      try {
+        const fmt = dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
+        doc.addImage(dataUrl, fmt, margin, y, maxW * 0.6, maxH, undefined, "FAST");
+      } catch {
+        // skip image if jsPDF can't decode it
+      }
+      y += maxH + 8;
+    }
+  }
+
   if (openPrint) {
     doc.autoPrint();
     const url = doc.output("bloburl");
