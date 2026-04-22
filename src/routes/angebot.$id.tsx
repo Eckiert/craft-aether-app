@@ -441,7 +441,6 @@ function QuoteEditor() {
               />
               <MicButton
                 fieldKey="notes"
-                append
                 onText={(t) =>
                   update({ notes: quote.notes ? quote.notes + " " + t : t })
                 }
