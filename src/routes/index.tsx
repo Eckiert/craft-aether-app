@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { formatEUR, STATUS_LABELS, STATUS_STYLES, type Quote, type QuoteStatus } from "@/lib/types";
-import { Plus, FileText, Trash2, Loader2 } from "lucide-react";
+import { Plus, FileText, Trash2, Loader2, ChevronLeft, ChevronRight, LayoutGrid, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -17,6 +17,12 @@ function IndexPage() {
   const navigate = useNavigate();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(true);
+  const [view, setView] = useState<"calendar" | "grid">("calendar");
+  const [cursor, setCursor] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
