@@ -61,61 +61,54 @@ export function AetherIntro({ onDone }: { onDone?: () => void }) {
 
       {/* Logo + Wordmark */}
       <div className="relative flex flex-col items-center gap-8">
-        {/* Mark: rotating ring with center dot */}
-        <div className="relative h-20 w-20 aether-mark-pop">
+        {/* Mark: minimal monogram "Æ" with drawn-in stroke */}
+        <div className="relative h-24 w-24 aether-mark-pop">
           <svg
-            viewBox="0 0 100 100"
-            className="absolute inset-0 h-full w-full aether-ring-spin"
+            viewBox="0 0 120 120"
+            className="absolute inset-0 h-full w-full"
+            fill="none"
           >
             <defs>
-              <linearGradient id="aether-ring" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="oklch(0.985 0 0)" stopOpacity="0.95" />
-                <stop offset="50%" stopColor="oklch(0.985 0 0)" stopOpacity="0.2" />
-                <stop offset="100%" stopColor="oklch(0.985 0 0)" stopOpacity="0.95" />
+              <linearGradient id="aether-stroke" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="oklch(0.985 0 0)" stopOpacity="1" />
+                <stop offset="100%" stopColor="oklch(0.985 0 0)" stopOpacity="0.6" />
               </linearGradient>
             </defs>
-            <circle
-              cx="50"
-              cy="50"
-              r="44"
-              fill="none"
-              stroke="url(#aether-ring)"
-              strokeWidth="1"
-              strokeDasharray="2 6"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="34"
-              fill="none"
-              stroke="oklch(0.985 0 0 / 0.3)"
-              strokeWidth="0.6"
-            />
-          </svg>
-          {/* Center triangle (A) */}
-          <svg
-            viewBox="0 0 100 100"
-            className="absolute inset-0 h-full w-full aether-tri-rise"
-          >
+            {/* Stylised A: two diagonals + crossbar */}
             <path
-              d="M50 28 L70 70 L30 70 Z"
-              fill="none"
-              stroke="oklch(0.985 0 0)"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M40 60 L60 60"
-              stroke="oklch(0.985 0 0)"
-              strokeWidth="1.5"
+              d="M30 92 L56 28 L82 92"
+              stroke="url(#aether-stroke)"
+              strokeWidth="2"
               strokeLinecap="round"
+              strokeLinejoin="round"
+              className="aether-draw"
+              pathLength={1}
+            />
+            <path
+              d="M40 70 L72 70"
+              stroke="url(#aether-stroke)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="aether-draw aether-draw-delay"
+              pathLength={1}
+            />
+            {/* Subtle horizon line beneath the mark */}
+            <path
+              d="M18 104 L102 104"
+              stroke="oklch(0.985 0 0 / 0.25)"
+              strokeWidth="0.6"
+              strokeLinecap="round"
+              className="aether-draw aether-draw-delay-2"
+              pathLength={1}
             />
           </svg>
-          {/* Glow halo */}
+          {/* Soft halo behind the mark */}
           <div
-            className="absolute inset-0 rounded-full aether-halo"
+            className="pointer-events-none absolute inset-0 aether-halo"
             style={{
-              boxShadow: "0 0 60px 8px oklch(1 0 0 / 0.18)",
+              background:
+                "radial-gradient(circle at 50% 45%, oklch(1 0 0 / 0.18) 0%, transparent 60%)",
+              filter: "blur(4px)",
             }}
           />
         </div>
@@ -149,29 +142,25 @@ export function AetherIntro({ onDone }: { onDone?: () => void }) {
 
       <style>{`
         @keyframes aether-mark-pop {
-          0% { opacity: 0; transform: scale(0.7); filter: blur(8px); }
-          60% { opacity: 1; transform: scale(1.05); filter: blur(0); }
+          0% { opacity: 0; transform: scale(0.92); filter: blur(6px); }
           100% { opacity: 1; transform: scale(1); filter: blur(0); }
         }
-        .aether-mark-pop { animation: aether-mark-pop 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+        .aether-mark-pop { animation: aether-mark-pop 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
-        @keyframes aether-ring-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes aether-draw {
+          0% { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+          20% { opacity: 1; }
+          100% { stroke-dasharray: 1; stroke-dashoffset: 0; opacity: 1; }
         }
-        .aether-ring-spin { animation: aether-ring-spin 14s linear infinite; transform-origin: center; }
-
-        @keyframes aether-tri-rise {
-          0% { opacity: 0; transform: translateY(8px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        .aether-tri-rise { animation: aether-tri-rise 900ms 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+        .aether-draw { animation: aether-draw 1400ms cubic-bezier(0.65, 0, 0.35, 1) both; }
+        .aether-draw-delay { animation-delay: 700ms; }
+        .aether-draw-delay-2 { animation-delay: 1100ms; }
 
         @keyframes aether-halo {
           0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.9; }
+          50% { opacity: 0.85; }
         }
-        .aether-halo { animation: aether-halo 2200ms ease-in-out infinite; border-radius: 9999px; }
+        .aether-halo { animation: aether-halo 2400ms ease-in-out infinite; }
 
         @keyframes aether-letter {
           0% { opacity: 0; transform: translateY(12px); filter: blur(6px); }
