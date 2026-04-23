@@ -27,7 +27,6 @@ import {
   Plus,
   Printer,
   Save,
-  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
