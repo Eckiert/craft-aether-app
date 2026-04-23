@@ -373,6 +373,15 @@ function QuoteEditor() {
         </div>
       </div>
 
+      {/* Voice-first hero — anchors the unique value proposition */}
+      <div className="mb-8">
+        <VoiceHero
+          onStart={startWalkTalk}
+          disabled={walkTalkOpen || processingDictation}
+          busy={processingDictation}
+        />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
         <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Kunde</h2>
