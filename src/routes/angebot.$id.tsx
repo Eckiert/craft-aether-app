@@ -466,15 +466,14 @@ function QuoteEditor() {
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Positionen</h2>
           <div className="flex gap-2">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={startWalkTalk}
               disabled={walkTalkOpen || processingDictation}
-              className="bg-gradient-to-r from-primary to-primary/80"
             >
-              <Sparkles className="h-4 w-4 mr-2" /> Walk &amp; Talk
+              <Mic className="h-4 w-4 mr-2" /> Erneut diktieren
             </Button>
-            <Button size="sm" variant="outline" onClick={() => addItem()}>
+            <Button size="sm" variant="ghost" onClick={() => addItem()}>
               <Plus className="h-4 w-4 mr-2" /> Position
             </Button>
           </div>
