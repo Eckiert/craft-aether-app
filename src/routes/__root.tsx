@@ -1,6 +1,8 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+import { AetherIntro } from "@/components/AetherIntro";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 
@@ -67,8 +69,25 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const [showIntro, setShowIntro] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const seen = sessionStorage.getItem("aether_intro_seen");
+      if (!seen) {
+        setShowIntro(true);
+        sessionStorage.setItem("aether_intro_seen", "1");
+      }
+    } catch {
+      // sessionStorage may be unavailable — show intro once anyway
+      setShowIntro(true);
+    }
+  }, []);
+
   return (
     <AuthProvider>
+      {showIntro && <AetherIntro onDone={() => setShowIntro(false)} />}
       <Outlet />
       <Toaster />
     </AuthProvider>
