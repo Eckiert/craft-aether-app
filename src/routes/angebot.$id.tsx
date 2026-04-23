@@ -17,6 +17,7 @@ import {
 import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
 import { generateQuotePdf } from "@/lib/pdf";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { VoiceHero } from "@/components/VoiceHero";
 import {
   ArrowLeft,
   ImagePlus,
@@ -26,7 +27,6 @@ import {
   Plus,
   Printer,
   Save,
-  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -372,6 +372,15 @@ function QuoteEditor() {
         </div>
       </div>
 
+      {/* Voice-first hero — anchors the unique value proposition */}
+      <div className="mb-8">
+        <VoiceHero
+          onStart={startWalkTalk}
+          disabled={walkTalkOpen || processingDictation}
+          busy={processingDictation}
+        />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
         <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Kunde</h2>
@@ -456,15 +465,14 @@ function QuoteEditor() {
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Positionen</h2>
           <div className="flex gap-2">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={startWalkTalk}
               disabled={walkTalkOpen || processingDictation}
-              className="bg-gradient-to-r from-primary to-primary/80"
             >
-              <Sparkles className="h-4 w-4 mr-2" /> Walk &amp; Talk
+              <Mic className="h-4 w-4 mr-2" /> Erneut diktieren
             </Button>
-            <Button size="sm" variant="outline" onClick={() => addItem()}>
+            <Button size="sm" variant="ghost" onClick={() => addItem()}>
               <Plus className="h-4 w-4 mr-2" /> Position
             </Button>
           </div>
