@@ -37,10 +37,14 @@ export const Route = createRootRoute({
       { name: "description", content: "Erstelle in Sekunden professionelle Angebote. Per Sprache oder manuell. PDF-Export inklusive." },
       { name: "author", content: "AETHER" },
       { property: "og:title", content: "AETHER — Angebote für Handwerker" },
-      { property: "og:description", content: "Erstelle in Sekunden professionelle Angebote. Per Sprache oder manuell." },
+      { property: "og:description", content: "Erstelle in Sekunden professionelle Angebote. Per Sprache oder manuell. PDF-Export inklusive." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "AETHER — Angebote für Handwerker" },
+      { name: "twitter:description", content: "Erstelle in Sekunden professionelle Angebote. Per Sprache oder manuell. PDF-Export inklusive." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a96dd0c7-8ff5-4b55-84f8-55337b240bf8/id-preview-3bf1db7b--96312c03-41e4-4d11-9d7a-30f860d8395e.lovable.app-1776940245319.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a96dd0c7-8ff5-4b55-84f8-55337b240bf8/id-preview-3bf1db7b--96312c03-41e4-4d11-9d7a-30f860d8395e.lovable.app-1776940245319.png" },
     ],
     links: [
       {
