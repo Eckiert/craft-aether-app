@@ -17,6 +17,7 @@ import {
 import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
 import { generateQuotePdf } from "@/lib/pdf";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { VoiceHero } from "@/components/VoiceHero";
 import {
   ArrowLeft,
   ImagePlus,
