@@ -75,6 +75,20 @@ function IndexPage() {
     toast.success("Gelöscht");
   };
 
+  const dayKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+  const quotesByDay = useMemo(() => {
+    const map = new Map<string, Quote[]>();
+    for (const q of quotes) {
+      const k = `${new Date(q.created_at).getFullYear()}-${String(new Date(q.created_at).getMonth() + 1).padStart(2, "0")}-${String(new Date(q.created_at).getDate()).padStart(2, "0")}`;
+      const arr = map.get(k);
+      if (arr) arr.push(q);
+      else map.set(k, [q]);
+    }
+    return map;
+  }, [quotes]);
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -89,20 +103,6 @@ function IndexPage() {
     accepted: "bg-green-400",
     rejected: "bg-red-400",
   };
-
-  const dayKey = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-  const quotesByDay = useMemo(() => {
-    const map = new Map<string, Quote[]>();
-    for (const q of quotes) {
-      const k = dayKey(new Date(q.created_at));
-      const arr = map.get(k);
-      if (arr) arr.push(q);
-      else map.set(k, [q]);
-    }
-    return map;
-  }, [quotes]);
 
   const monthLabel = cursor.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
   const year = cursor.getFullYear();
