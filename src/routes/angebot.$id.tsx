@@ -268,6 +268,19 @@ function QuoteEditor() {
     setWalkTalkOpen(false);
   };
 
+  const handleVoiceHeroClick = async () => {
+    if (processingDictation) return;
+    if (walkTalkOpen && recorder.isRecording) {
+      await finishWalkTalk();
+      return;
+    }
+    if (walkTalkOpen) {
+      cancelWalkTalk();
+      return;
+    }
+    await startWalkTalk();
+  };
+
   // Single-field dictation (Kunde, Adresse, Projekt, Anmerkungen)
   const startFieldDictation = async (
     fieldKey: string,
@@ -345,7 +358,12 @@ function QuoteEditor() {
 
   return (
     <AppShell>
-      <VoiceHero />
+      <VoiceHero
+        onClick={handleVoiceHeroClick}
+        disabled={processingDictation}
+        isRecording={walkTalkOpen && recorder.isRecording}
+        isProcessing={processingDictation}
+      />
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <Link
           to="/"
