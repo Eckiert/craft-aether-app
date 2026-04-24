@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { formatEUR, STATUS_LABELS, STATUS_STYLES, type Quote, type QuoteStatus } from "@/lib/types";
 import { Plus, FileText, Trash2, Loader2, ChevronLeft, ChevronRight, LayoutGrid, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
-import { VoiceHero } from "@/components/VoiceHero";
 
 export const Route = createFileRoute("/")({
   component: IndexPage,
@@ -152,11 +151,6 @@ function IndexPage() {
             <Plus className="h-4 w-4" /> Neues Angebot
           </Button>
         </div>
-      </div>
-
-      {/* Voice-first hero — surfaces the unique value proposition immediately */}
-      <div className="mb-10">
-        <VoiceHero onStart={createNew} />
       </div>
 
       {loadingQuotes ? (
