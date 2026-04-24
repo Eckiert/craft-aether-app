@@ -455,7 +455,7 @@ function QuoteEditor() {
       </div>
 
       <section className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="p-6 border-b border-border flex items-center justify-between flex-wrap gap-3">
+        <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between flex-wrap gap-3">
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Positionen</h2>
           <div className="flex gap-2">
             <Button
@@ -488,7 +488,7 @@ function QuoteEditor() {
                     placeholder="Leistung / Material"
                   />
                 </div>
-                <div className="col-span-4 md:col-span-2 space-y-1">
+                <div className="col-span-6 md:col-span-2 space-y-1">
                   <Label className="text-xs text-muted-foreground">Menge</Label>
                   <Input
                     type="number"
@@ -497,7 +497,7 @@ function QuoteEditor() {
                     onChange={(e) => updateItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
-                <div className="col-span-4 md:col-span-1 space-y-1">
+                <div className="col-span-6 md:col-span-1 space-y-1">
                   <Label className="text-xs text-muted-foreground">Einheit</Label>
                   <Select
                     value={item.unit}
@@ -513,7 +513,7 @@ function QuoteEditor() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-4 md:col-span-2 space-y-1">
+                <div className="col-span-6 md:col-span-2 space-y-1">
                   <Label className="text-xs text-muted-foreground">Preis (€)</Label>
                   <Input
                     type="number"
@@ -522,10 +522,10 @@ function QuoteEditor() {
                     onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
-                <div className="col-span-10 md:col-span-1 text-right font-medium tabular-nums">
+                <div className="col-span-6 md:col-span-1 text-right font-medium tabular-nums self-center">
                   {formatEUR(item.quantity * item.price)}
                 </div>
-                <div className="col-span-2 md:col-span-1 justify-self-end flex gap-1">
+                <div className="col-span-12 md:col-span-1 justify-self-end flex gap-1">
                   <input
                     ref={(el) => {
                       fileInputs.current[item.id] = el;
