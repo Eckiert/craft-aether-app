@@ -123,14 +123,14 @@ function IndexPage() {
 
   return (
     <AppShell>
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10">
         <div>
-          <h1 className="text-4xl font-semibold tracking-tight">Angebote</h1>
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">Angebote</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Erstelle und verwalte deine Kundenangebote.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center rounded-lg border border-border p-0.5">
             <button
               onClick={() => setView("calendar")}
@@ -147,7 +147,7 @@ function IndexPage() {
               <LayoutGrid className="h-3.5 w-3.5" /> Liste
             </button>
           </div>
-          <Button onClick={createNew} size="lg" className="gap-2">
+          <Button onClick={createNew} size="lg" className="gap-2 ml-auto sm:ml-0">
             <Plus className="h-4 w-4" /> Neues Angebot
           </Button>
         </div>

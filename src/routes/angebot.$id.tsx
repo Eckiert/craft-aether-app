@@ -342,19 +342,19 @@ function QuoteEditor() {
   return (
     <AppShell>
       <VoiceHero />
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
         >
           <ArrowLeft className="h-4 w-4" /> Übersicht
         </Link>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <Select
             value={quote.status ?? "draft"}
             onValueChange={(v) => update({ status: v as QuoteStatus })}
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[140px] sm:w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -363,12 +363,14 @@ function QuoteEditor() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => save()} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            Speichern
+          <Button variant="outline" onClick={() => save()} disabled={saving} className="px-3">
+            {saving ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" /> : <Save className="h-4 w-4 sm:mr-2" />}
+            <span className="hidden sm:inline">Speichern</span>
           </Button>
-          <Button onClick={exportPdf}>
-            <Printer className="h-4 w-4 mr-2" /> PDF & Drucken
+          <Button onClick={exportPdf} className="px-3">
+            <Printer className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">PDF & Drucken</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
         </div>
       </div>
@@ -453,7 +455,7 @@ function QuoteEditor() {
       </div>
 
       <section className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="p-6 border-b border-border flex items-center justify-between flex-wrap gap-3">
+        <div className="p-4 sm:p-6 border-b border-border flex items-center justify-between flex-wrap gap-3">
           <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Positionen</h2>
           <div className="flex gap-2">
             <Button
@@ -486,7 +488,7 @@ function QuoteEditor() {
                     placeholder="Leistung / Material"
                   />
                 </div>
-                <div className="col-span-4 md:col-span-2 space-y-1">
+                <div className="col-span-6 md:col-span-2 space-y-1">
                   <Label className="text-xs text-muted-foreground">Menge</Label>
                   <Input
                     type="number"
@@ -495,7 +497,7 @@ function QuoteEditor() {
                     onChange={(e) => updateItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
-                <div className="col-span-4 md:col-span-1 space-y-1">
+                <div className="col-span-6 md:col-span-1 space-y-1">
                   <Label className="text-xs text-muted-foreground">Einheit</Label>
                   <Select
                     value={item.unit}
@@ -511,7 +513,7 @@ function QuoteEditor() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-4 md:col-span-2 space-y-1">
+                <div className="col-span-6 md:col-span-2 space-y-1">
                   <Label className="text-xs text-muted-foreground">Preis (€)</Label>
                   <Input
                     type="number"
@@ -520,10 +522,10 @@ function QuoteEditor() {
                     onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
-                <div className="col-span-10 md:col-span-1 text-right font-medium tabular-nums">
+                <div className="col-span-6 md:col-span-1 text-right font-medium tabular-nums self-center">
                   {formatEUR(item.quantity * item.price)}
                 </div>
-                <div className="col-span-2 md:col-span-1 justify-self-end flex gap-1">
+                <div className="col-span-12 md:col-span-1 justify-self-end flex gap-1">
                   <input
                     ref={(el) => {
                       fileInputs.current[item.id] = el;

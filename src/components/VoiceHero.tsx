@@ -2,18 +2,18 @@ import { Mic, Sparkles, Zap, FileText } from "lucide-react";
 
 export function VoiceHero() {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-8 mb-10">
+    <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 sm:p-8 mb-8 sm:mb-10">
       {/* Decorative glow */}
       <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
 
-      <div className="relative grid gap-8 md:grid-cols-[auto_1fr] md:items-center">
+      <div className="relative grid gap-6 md:gap-8 md:grid-cols-[auto_1fr] md:items-center">
         {/* Animated mic */}
-        <div className="relative flex items-center justify-center">
-          <span className="absolute inline-flex h-24 w-24 rounded-full bg-primary/30 animate-ping" />
-          <span className="absolute inline-flex h-20 w-20 rounded-full bg-primary/40 animate-pulse" />
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40">
-            <Mic className="h-9 w-9" />
+        <div className="relative flex items-center justify-center mx-auto md:mx-0">
+          <span className="absolute inline-flex h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-primary/30 animate-ping" />
+          <span className="absolute inline-flex h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-primary/40 animate-pulse" />
+          <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/40">
+            <Mic className="h-7 w-7 sm:h-9 sm:w-9" />
           </div>
         </div>
 
@@ -21,7 +21,7 @@ export function VoiceHero() {
           <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-primary">
             <Sparkles className="h-3 w-3" /> KI-Spracherkennung
           </div>
-          <h2 className="mt-3 text-2xl md:text-3xl font-semibold tracking-tight">
+          <h2 className="mt-3 text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight">
             Einfach sprechen — Aether erstellt dein Angebot.
           </h2>
           <p className="mt-2 text-sm md:text-base text-muted-foreground max-w-2xl">
