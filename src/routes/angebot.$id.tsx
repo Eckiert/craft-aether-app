@@ -17,6 +17,7 @@ import {
 import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
 import { generateQuotePdf } from "@/lib/pdf";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { VoiceHero } from "@/components/VoiceHero";
 import {
   ArrowLeft,
   ImagePlus,
@@ -340,6 +341,7 @@ function QuoteEditor() {
 
   return (
     <AppShell>
+      <VoiceHero />
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Link
           to="/"
