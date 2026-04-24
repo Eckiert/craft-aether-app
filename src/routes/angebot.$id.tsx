@@ -342,19 +342,19 @@ function QuoteEditor() {
   return (
     <AppShell>
       <VoiceHero />
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
         >
           <ArrowLeft className="h-4 w-4" /> Übersicht
         </Link>
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-2 items-center flex-wrap">
           <Select
             value={quote.status ?? "draft"}
             onValueChange={(v) => update({ status: v as QuoteStatus })}
           >
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[140px] sm:w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -363,12 +363,14 @@ function QuoteEditor() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => save()} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-            Speichern
+          <Button variant="outline" onClick={() => save()} disabled={saving} className="px-3">
+            {saving ? <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" /> : <Save className="h-4 w-4 sm:mr-2" />}
+            <span className="hidden sm:inline">Speichern</span>
           </Button>
-          <Button onClick={exportPdf}>
-            <Printer className="h-4 w-4 mr-2" /> PDF & Drucken
+          <Button onClick={exportPdf} className="px-3">
+            <Printer className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">PDF & Drucken</span>
+            <span className="sm:hidden">PDF</span>
           </Button>
         </div>
       </div>
