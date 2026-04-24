@@ -4,7 +4,6 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
-import { VoiceHero } from "@/components/VoiceHero";
 import { formatEUR, STATUS_LABELS, STATUS_STYLES, type Quote, type QuoteStatus } from "@/lib/types";
 import { Plus, FileText, Trash2, Loader2, ChevronLeft, ChevronRight, LayoutGrid, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
@@ -124,7 +123,6 @@ function IndexPage() {
 
   return (
     <AppShell>
-      <VoiceHero />
       <div className="flex items-center justify-between mb-10">
         <div>
           <h1 className="text-4xl font-semibold tracking-tight">Angebote</h1>
