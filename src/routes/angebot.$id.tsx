@@ -17,7 +17,6 @@ import {
 import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
 import { generateQuotePdf } from "@/lib/pdf";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
-import { VoiceHero } from "@/components/VoiceHero";
 import {
   ArrowLeft,
   ImagePlus,
@@ -370,15 +369,6 @@ function QuoteEditor() {
             <Printer className="h-4 w-4 mr-2" /> PDF & Drucken
           </Button>
         </div>
-      </div>
-
-      {/* Voice-first hero — anchors the unique value proposition */}
-      <div className="mb-8">
-        <VoiceHero
-          onStart={startWalkTalk}
-          disabled={walkTalkOpen || processingDictation}
-          busy={processingDictation}
-        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
