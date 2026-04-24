@@ -1,9 +1,26 @@
-import { Mic, Sparkles, Zap, FileText } from "lucide-react";
+import { FileText, Mic, MicOff, Loader2, Sparkles, Zap } from "lucide-react";
 
-export function VoiceHero() {
+interface VoiceHeroProps {
+  onClick?: () => void;
+  disabled?: boolean;
+  isRecording?: boolean;
+  isProcessing?: boolean;
+}
+
+export function VoiceHero({
+  onClick,
+  disabled = false,
+  isRecording = false,
+  isProcessing = false,
+}: VoiceHeroProps) {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 sm:p-8 mb-8 sm:mb-10">
-      {/* Decorative glow */}
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="relative mb-8 block w-full overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 text-left transition-all hover:border-primary/30 hover:bg-gradient-to-br hover:from-primary/15 hover:via-card hover:to-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-70 sm:mb-10 sm:p-8"
+      aria-label={isRecording ? "Sprachaufnahme stoppen" : "Sprachaufnahme starten"}
+    >
       <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
 
@@ -29,6 +46,25 @@ export function VoiceHero() {
             natürlicher Sprache — die KI strukturiert alles automatisch in dein Angebot.
           </p>
 
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-4 py-2 text-sm font-medium text-foreground shadow-sm">
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                KI verarbeitet Aufnahme…
+              </>
+            ) : isRecording ? (
+              <>
+                <MicOff className="h-4 w-4 text-destructive" />
+                Tippen zum Stoppen & Auswerten
+              </>
+            ) : (
+              <>
+                <Mic className="h-4 w-4 text-primary" />
+                Tippen zum Starten von Walk & Talk
+              </>
+            )}
+          </div>
+
           <div className="mt-5 flex flex-wrap gap-2">
             <div className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-foreground">
               <Zap className="h-3.5 w-3.5 text-primary" /> Sekundenschnell
@@ -42,6 +78,6 @@ export function VoiceHero() {
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
