@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 
 export interface AudioRecorder {
   isRecording: boolean;
-  start: () => Promise<void>;
+  start: () => Promise<{ ok: boolean; error?: string }>;
   stop: () => Promise<Blob | null>;
   cancel: () => void;
   error: string | null;
@@ -26,6 +26,11 @@ export function useAudioRecorder(): AudioRecorder {
   const start = useCallback(async () => {
     setError(null);
     try {
+      if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+        const msg = "Mikrofon-API in diesem Browser nicht verfügbar";
+        setError(msg);
+        return { ok: false, error: msg };
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
@@ -50,10 +55,23 @@ export function useAudioRecorder(): AudioRecorder {
       recorder.start();
       recorderRef.current = recorder;
       setIsRecording(true);
+      return { ok: true };
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Mikrofon nicht verfügbar");
+      const raw = e instanceof Error ? e.message : "Mikrofon nicht verfügbar";
+      const name = e instanceof Error ? e.name : "";
+      let friendly = raw;
+      if (name === "NotAllowedError" || /denied|permission/i.test(raw)) {
+        friendly =
+          "Mikrofon-Zugriff verweigert. In der Lovable-Vorschau (iframe) ist das Mikrofon oft blockiert — öffne die App in einem neuen Tab und erlaube den Zugriff.";
+      } else if (name === "NotFoundError") {
+        friendly = "Kein Mikrofon gefunden.";
+      } else if (name === "NotReadableError") {
+        friendly = "Mikrofon wird bereits von einer anderen App verwendet.";
+      }
+      setError(friendly);
       cleanup();
       setIsRecording(false);
+      return { ok: false, error: friendly };
     }
   }, []);
 

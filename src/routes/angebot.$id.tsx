@@ -210,8 +210,11 @@ function QuoteEditor() {
   // Walk-&-Talk: record → transcribe → AI extracts multiple positions
   const startWalkTalk = async () => {
     setWalkTalkOpen(true);
-    await recorder.start();
-    if (recorder.error) toast.error(recorder.error);
+    const res = await recorder.start();
+    if (!res.ok) {
+      toast.error(res.error ?? "Mikrofon nicht verfügbar");
+      setWalkTalkOpen(false);
+    }
   };
 
   const finishWalkTalk = async () => {
@@ -272,9 +275,10 @@ function QuoteEditor() {
   ) => {
     setActiveFieldKey(fieldKey);
     fieldApplyRef.current = apply;
-    await recorder.start();
-    if (recorder.error) {
-      toast.error(recorder.error);
+    const res = await recorder.start();
+    if (!res.ok) {
+      toast.error(res.error ?? "Mikrofon nicht verfügbar");
+      fieldApplyRef.current = null;
       setActiveFieldKey(null);
     }
   };
