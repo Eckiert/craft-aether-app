@@ -463,7 +463,27 @@ function QuoteEditor() {
 
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
         <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
-          <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Kunde</h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Kunde</h2>
+            {customers.length > 0 && (
+              <Select
+                value={(quote as Quote & { customer_id?: string | null }).customer_id ?? "__none__"}
+                onValueChange={selectCustomer}
+              >
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <SelectValue placeholder="Kunde wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— Kein Stammkunde —</SelectItem>
+                  {customers.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="cn">Name</Label>
             <div className="flex gap-2">
@@ -501,6 +521,22 @@ function QuoteEditor() {
               />
             </div>
           </div>
+          {!(quote as Quote & { customer_id?: string | null }).customer_id && quote.customer_name?.trim() && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={saveAsCustomer}
+              disabled={savingCustomer}
+              className="text-xs gap-1.5"
+            >
+              {savingCustomer ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <UserPlus className="h-3.5 w-3.5" />
+              )}
+              Als Stammkunde speichern
+            </Button>
+          )}
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
