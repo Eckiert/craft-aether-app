@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as KundenRouteImport } from './routes/kunden'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranscribeRouteImport } from './routes/api.transcribe'
 import { Route as ApiParsePositionsRouteImport } from './routes/api.parse-positions'
@@ -18,6 +19,11 @@ import { Route as AngebotIdRouteImport } from './routes/angebot.$id'
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KundenRoute = KundenRouteImport.update({
+  id: '/kunden',
+  path: '/kunden',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,6 +49,7 @@ const AngebotIdRoute = AngebotIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
   '/api/parse-positions': typeof ApiParsePositionsRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
   '/api/parse-positions': typeof ApiParsePositionsRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
   '/api/parse-positions': typeof ApiParsePositionsRoute
@@ -67,6 +76,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/kunden'
     | '/login'
     | '/angebot/$id'
     | '/api/parse-positions'
@@ -74,6 +84,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/kunden'
     | '/login'
     | '/angebot/$id'
     | '/api/parse-positions'
@@ -81,6 +92,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/kunden'
     | '/login'
     | '/angebot/$id'
     | '/api/parse-positions'
@@ -89,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  KundenRoute: typeof KundenRoute
   LoginRoute: typeof LoginRoute
   AngebotIdRoute: typeof AngebotIdRoute
   ApiParsePositionsRoute: typeof ApiParsePositionsRoute
@@ -102,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kunden': {
+      id: '/kunden'
+      path: '/kunden'
+      fullPath: '/kunden'
+      preLoaderRoute: typeof KundenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -137,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  KundenRoute: KundenRoute,
   LoginRoute: LoginRoute,
   AngebotIdRoute: AngebotIdRoute,
   ApiParsePositionsRoute: ApiParsePositionsRoute,

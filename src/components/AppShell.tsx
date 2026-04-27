@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, FileText, Users } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
@@ -16,9 +16,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border sticky top-0 z-40 bg-background/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-          <Link to="/" className="font-mono tracking-[0.3em] text-sm shrink-0">
-            AETHER
-          </Link>
+          <div className="flex items-center gap-4 sm:gap-6 min-w-0">
+            <Link to="/" className="font-mono tracking-[0.3em] text-sm shrink-0">
+              AETHER
+            </Link>
+            <nav className="flex items-center gap-1">
+              <Link
+                to="/"
+                activeOptions={{ exact: true }}
+                activeProps={{ className: "text-foreground bg-muted" }}
+                inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs sm:text-sm transition-colors"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Angebote</span>
+              </Link>
+              <Link
+                to="/kunden"
+                activeProps={{ className: "text-foreground bg-muted" }}
+                inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs sm:text-sm transition-colors"
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Kunden</span>
+              </Link>
+            </nav>
+          </div>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <span className="text-xs text-muted-foreground hidden sm:block">{user?.email}</span>
             <Button variant="ghost" size="sm" onClick={onSignOut} className="px-2 sm:px-3">
