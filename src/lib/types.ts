@@ -46,3 +46,15 @@ export function calcTotal(items: QuoteItem[]): number {
 export function formatEUR(value: number): string {
   return new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
 }
+
+export interface Customer {
+  id: string;
+  user_id: string;
+  name: string;
+  address: string | null;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
