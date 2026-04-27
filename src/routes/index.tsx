@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { formatEUR, STATUS_LABELS, STATUS_STYLES, type Quote, type QuoteStatus } from "@/lib/types";
-import { Plus, FileText, Trash2, Loader2, ChevronLeft, ChevronRight, LayoutGrid, CalendarDays } from "lucide-react";
+import { Plus, FileText, Trash2, Loader2, ChevronLeft, ChevronRight, LayoutGrid, CalendarDays, TrendingUp, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -18,6 +18,7 @@ function IndexPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(true);
   const [view, setView] = useState<"calendar" | "grid">("calendar");
+  const [statusFilter, setStatusFilter] = useState<QuoteStatus | "all">("all");
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -89,6 +90,20 @@ function IndexPage() {
     return map;
   }, [quotes]);
 
+  const stats = useMemo(() => {
+    const acceptedSum = quotes
+      .filter((q) => q.status === "accepted")
+      .reduce((s, q) => s + Number(q.total), 0);
+    const openCount = quotes.filter((q) => q.status === "draft" || q.status === "sent").length;
+    const acceptedCount = quotes.filter((q) => q.status === "accepted").length;
+    return { acceptedSum, openCount, acceptedCount, total: quotes.length };
+  }, [quotes]);
+
+  const filteredQuotes = useMemo(
+    () => (statusFilter === "all" ? quotes : quotes.filter((q) => q.status === statusFilter)),
+    [quotes, statusFilter],
+  );
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -153,6 +168,67 @@ function IndexPage() {
         </div>
       </div>
 
+      {quotes.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-3 mb-6">
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <TrendingUp className="h-3.5 w-3.5" /> Umsatz (angenommen)
+            </div>
+            <div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
+              {formatEUR(stats.acceptedSum)}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Angenommen
+            </div>
+            <div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
+              {stats.acceptedCount}
+              <span className="text-sm text-muted-foreground font-normal"> / {stats.total}</span>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" /> Offen
+            </div>
+            <div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
+              {stats.openCount}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === "grid" && quotes.length > 0 && (
+        <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+          <button
+            onClick={() => setStatusFilter("all")}
+            className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+              statusFilter === "all"
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Alle ({quotes.length})
+          </button>
+          {(Object.keys(STATUS_LABELS) as QuoteStatus[]).map((s) => {
+            const count = quotes.filter((q) => q.status === s).length;
+            return (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+                  statusFilter === s
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {STATUS_LABELS[s]} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {loadingQuotes ? (
         <div className="flex justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -170,7 +246,7 @@ function IndexPage() {
         </div>
       ) : view === "grid" ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {quotes.map((q) => (
+          {filteredQuotes.map((q) => (
             <div
               key={q.id}
               className="group relative rounded-2xl border border-border bg-card p-5 hover:border-foreground/30 transition-all"
