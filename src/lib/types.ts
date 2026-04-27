@@ -19,6 +19,7 @@ export interface Quote {
   status: QuoteStatus;
   created_at: string;
   updated_at: string;
+  customer_id?: string | null;
 }
 
 export const UNITS = ["Stk", "m", "m²", "m³", "kg", "h", "Tag", "Pauschal"] as const;
