@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
+import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Customer, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
 import { generateQuotePdf } from "@/lib/pdf";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { VoiceHero } from "@/components/VoiceHero";
@@ -28,6 +28,7 @@ import {
   Printer,
   Save,
   Trash2,
+  UserPlus,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -63,6 +64,8 @@ function QuoteEditor() {
   const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
   const fieldApplyRef = useRef<((text: string) => void) | null>(null);
   const recorder = useAudioRecorder();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [savingCustomer, setSavingCustomer] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -90,6 +93,21 @@ function QuoteEditor() {
       active = false;
     };
   }, [id, user, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    (async () => {
+      const { data } = await supabase
+        .from("customers")
+        .select("*")
+        .order("name", { ascending: true });
+      if (active && data) setCustomers(data as Customer[]);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const total = useMemo(() => (quote ? calcTotal(quote.items) : 0), [quote]);
 
@@ -180,6 +198,7 @@ function QuoteEditor() {
         items: quote.items as unknown as never,
         status: quote.status,
         total,
+        customer_id: (quote as Quote & { customer_id?: string | null }).customer_id ?? null,
       })
       .eq("id", quote.id);
     setSaving(false);
@@ -189,6 +208,51 @@ function QuoteEditor() {
     }
     if (!silent) toast.success("Gespeichert");
     return true;
+  };
+
+  const selectCustomer = (customerId: string) => {
+    if (customerId === "__none__") {
+      setQuote((q) =>
+        q ? ({ ...q, customer_id: null } as Quote) : q,
+      );
+      return;
+    }
+    const c = customers.find((x) => x.id === customerId);
+    if (!c) return;
+    setQuote((q) =>
+      q
+        ? ({
+            ...q,
+            customer_id: c.id,
+            customer_name: c.name,
+            customer_address: c.address ?? "",
+          } as Quote)
+        : q,
+    );
+  };
+
+  const saveAsCustomer = async () => {
+    if (!user || !quote) return;
+    if (!quote.customer_name?.trim()) {
+      toast.error("Bitte erst einen Kundennamen eingeben");
+      return;
+    }
+    setSavingCustomer(true);
+    const { data, error } = await supabase
+      .from("customers")
+      .insert({
+        user_id: user.id,
+        name: quote.customer_name.trim(),
+        address: quote.customer_address?.trim() || null,
+      })
+      .select()
+      .single();
+    setSavingCustomer(false);
+    if (error || !data) return toast.error(error?.message ?? "Fehler");
+    const newC = data as Customer;
+    setCustomers((cs) => [...cs, newC].sort((a, b) => a.name.localeCompare(b.name)));
+    setQuote((q) => (q ? ({ ...q, customer_id: newC.id } as Quote) : q));
+    toast.success("Als Kunde gespeichert");
   };
 
   const exportPdf = async () => {
