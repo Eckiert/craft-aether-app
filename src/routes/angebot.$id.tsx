@@ -198,7 +198,7 @@ function QuoteEditor() {
         items: quote.items as unknown as never,
         status: quote.status,
         total,
-        customer_id: (quote as Quote & { customer_id?: string | null }).customer_id ?? null,
+        customer_id: quote.customer_id ?? null,
       })
       .eq("id", quote.id);
     setSaving(false);
@@ -212,21 +212,19 @@ function QuoteEditor() {
 
   const selectCustomer = (customerId: string) => {
     if (customerId === "__none__") {
-      setQuote((q) =>
-        q ? ({ ...q, customer_id: null } as Quote) : q,
-      );
+      setQuote((q) => (q ? { ...q, customer_id: null } : q));
       return;
     }
     const c = customers.find((x) => x.id === customerId);
     if (!c) return;
     setQuote((q) =>
       q
-        ? ({
+        ? {
             ...q,
             customer_id: c.id,
             customer_name: c.name,
             customer_address: c.address ?? "",
-          } as Quote)
+          }
         : q,
     );
   };
@@ -251,7 +249,7 @@ function QuoteEditor() {
     if (error || !data) return toast.error(error?.message ?? "Fehler");
     const newC = data as Customer;
     setCustomers((cs) => [...cs, newC].sort((a, b) => a.name.localeCompare(b.name)));
-    setQuote((q) => (q ? ({ ...q, customer_id: newC.id } as Quote) : q));
+    setQuote((q) => (q ? { ...q, customer_id: newC.id } : q));
     toast.success("Als Kunde gespeichert");
   };
 
@@ -467,7 +465,7 @@ function QuoteEditor() {
             <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Kunde</h2>
             {customers.length > 0 && (
               <Select
-                value={(quote as Quote & { customer_id?: string | null }).customer_id ?? "__none__"}
+                value={quote.customer_id ?? "__none__"}
                 onValueChange={selectCustomer}
               >
                 <SelectTrigger className="w-[180px] h-8 text-xs">
@@ -521,7 +519,7 @@ function QuoteEditor() {
               />
             </div>
           </div>
-          {!(quote as Quote & { customer_id?: string | null }).customer_id && quote.customer_name?.trim() && (
+          {!quote.customer_id && quote.customer_name?.trim() && (
             <Button
               variant="ghost"
               size="sm"
