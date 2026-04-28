@@ -38,8 +38,21 @@ export const Route = createFileRoute("/api/transcribe")({
           if (!res.ok) {
             const err = await res.text();
             console.error("ElevenLabs error:", res.status, err);
+            let detail = "Bitte prüfe deinen ElevenLabs API-Key.";
+            try {
+              const parsed = JSON.parse(err) as { detail?: { status?: string; message?: string } | string };
+              if (typeof parsed.detail === "object" && parsed.detail?.status === "detected_unusual_activity") {
+                detail = "ElevenLabs blockiert Free-Tier-Anfragen aus der Cloud. Bitte nutze einen ElevenLabs-Key mit aktivem Paid Plan.";
+              } else if (typeof parsed.detail === "object" && parsed.detail?.message) {
+                detail = parsed.detail.message;
+              } else if (typeof parsed.detail === "string") {
+                detail = parsed.detail;
+              }
+            } catch {
+              if (err) detail = err;
+            }
             return new Response(
-              JSON.stringify({ error: `Transkription fehlgeschlagen (${res.status})` }),
+              JSON.stringify({ error: `Transkription fehlgeschlagen (${res.status}): ${detail}` }),
               { status: 500, headers: { "Content-Type": "application/json" } },
             );
           }
