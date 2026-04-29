@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { calcTotal, formatEUR, STATUS_LABELS, UNITS, type Customer, type Quote, type QuoteItem, type QuoteStatus } from "@/lib/types";
 import { generateQuotePdf } from "@/lib/pdf";
+import { getBauleiterEmail } from "@/lib/settings";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { VoiceHero } from "@/components/VoiceHero";
 import {
@@ -258,6 +259,20 @@ function QuoteEditor() {
     const ok = await save(true);
     if (!ok) return;
     generateQuotePdf({ ...quote, total }, true);
+    const bauleiterEmail = getBauleiterEmail();
+    if (bauleiterEmail) {
+      const subject = `Angebot: ${quote.project_name || "Ohne Titel"}`;
+      const body =
+        `Hallo,\n\nim Anhang das Angebot für ${quote.customer_name || "den Kunden"}` +
+        ` (Projekt: ${quote.project_name || "-"}).\n\n` +
+        `Gesamtsumme: ${formatEUR(total)}\n\n` +
+        `Bitte das soeben heruntergeladene PDF manuell anhängen.\n\nViele Grüße`;
+      const mailto = `mailto:${encodeURIComponent(bauleiterEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailto;
+      toast.success(`E-Mail an ${bauleiterEmail} vorbereitet – PDF bitte anhängen.`);
+    } else {
+      toast.message("Tipp: Hinterlege eine Bauleiter-E-Mail in den Einstellungen, um das PDF direkt zu versenden.");
+    }
   };
 
   const transcribeBlob = async (blob: Blob): Promise<string> => {
