@@ -441,6 +441,13 @@ function QuoteEditor() {
         isRecording={walkTalkOpen && recorder.isRecording}
         isProcessing={processingDictation}
       />
+      <div className="-mt-4 mb-6 text-center text-xs text-muted-foreground min-h-[1rem]">
+        {processingDictation
+          ? "KI extrahiert Positionen…"
+          : walkTalkOpen && recorder.isRecording
+            ? "Aufnahme läuft – nochmal klicken zum Auswerten"
+            : "Tippe das Mikrofon und beschreibe alle Positionen frei."}
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <Link
           to="/"
@@ -736,51 +743,6 @@ function QuoteEditor() {
         Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmer).
       </p>
 
-      {walkTalkOpen && (
-        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-card border border-border rounded-2xl p-8 text-center space-y-6 shadow-2xl">
-            <div>
-              <h3 className="text-xl font-semibold mb-2">Walk &amp; Talk</h3>
-              <p className="text-sm text-muted-foreground">
-                Beschreibe alle Positionen frei – z. B. <em>"Wandanstrich Wohnzimmer 25 Quadratmeter, weiße Dispersion, 18,90 pro Quadratmeter. Dann sechs Steckdosen tauschen, 35 Euro pro Stück."</em>
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center gap-4 py-4">
-              {processingDictation ? (
-                <>
-                  <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">KI extrahiert Positionen…</p>
-                </>
-              ) : recorder.isRecording ? (
-                <>
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-destructive/30 rounded-full animate-ping" />
-                    <div className="relative h-20 w-20 rounded-full bg-destructive flex items-center justify-center">
-                      <Mic className="h-10 w-10 text-destructive-foreground" />
-                    </div>
-                  </div>
-                  <p className="text-sm font-medium">Aufnahme läuft…</p>
-                </>
-              ) : (
-                <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-              )}
-            </div>
-
-            <div className="flex gap-2 justify-center">
-              <Button variant="ghost" onClick={cancelWalkTalk} disabled={processingDictation}>
-                Abbrechen
-              </Button>
-              <Button
-                onClick={finishWalkTalk}
-                disabled={!recorder.isRecording || processingDictation}
-              >
-                <MicOff className="h-4 w-4 mr-2" /> Fertig &amp; auswerten
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </AppShell>
   );
 }
