@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KundenRouteImport } from './routes/kunden'
+import { Route as BaustelleRouteImport } from './routes/baustelle'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranscribeRouteImport } from './routes/api.transcribe'
 import { Route as ApiParsePositionsRouteImport } from './routes/api.parse-positions'
@@ -24,6 +25,11 @@ const LoginRoute = LoginRouteImport.update({
 const KundenRoute = KundenRouteImport.update({
   id: '/kunden',
   path: '/kunden',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BaustelleRoute = BaustelleRouteImport.update({
+  id: '/baustelle',
+  path: '/baustelle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -49,6 +55,7 @@ const AngebotIdRoute = AngebotIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/baustelle': typeof BaustelleRoute
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/baustelle': typeof BaustelleRoute
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/baustelle': typeof BaustelleRoute
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/baustelle'
     | '/kunden'
     | '/login'
     | '/angebot/$id'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/baustelle'
     | '/kunden'
     | '/login'
     | '/angebot/$id'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/baustelle'
     | '/kunden'
     | '/login'
     | '/angebot/$id'
@@ -101,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BaustelleRoute: typeof BaustelleRoute
   KundenRoute: typeof KundenRoute
   LoginRoute: typeof LoginRoute
   AngebotIdRoute: typeof AngebotIdRoute
@@ -122,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/kunden'
       fullPath: '/kunden'
       preLoaderRoute: typeof KundenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/baustelle': {
+      id: '/baustelle'
+      path: '/baustelle'
+      fullPath: '/baustelle'
+      preLoaderRoute: typeof BaustelleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -157,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BaustelleRoute: BaustelleRoute,
   KundenRoute: KundenRoute,
   LoginRoute: LoginRoute,
   AngebotIdRoute: AngebotIdRoute,
@@ -166,12 +187,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
