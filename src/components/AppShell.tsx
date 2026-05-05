@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LogOut, FileText, Users, Settings as SettingsIcon } from "lucide-react";
+import { LogOut, FileText, Users, Settings as SettingsIcon, HardHat } from "lucide-react";
 import { getBauleiterEmail, setBauleiterEmail } from "@/lib/settings";
 import { toast } from "sonner";
 
@@ -64,6 +64,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <Users className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Kunden</span>
+              </Link>
+              <Link
+                to="/baustelle"
+                activeProps={{ className: "text-foreground bg-muted" }}
+                inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs sm:text-sm transition-colors"
+              >
+                <HardHat className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Baustelle</span>
               </Link>
             </nav>
           </div>
