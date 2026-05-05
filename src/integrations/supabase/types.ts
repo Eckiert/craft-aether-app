@@ -103,6 +103,103 @@ export type Database = {
           },
         ]
       }
+      site_diary_entries: {
+        Row: {
+          created_at: string
+          entry_date: string
+          id: string
+          incidents: string | null
+          materials: string | null
+          notes: string | null
+          personnel: string | null
+          site_id: string
+          temperature: string | null
+          updated_at: string
+          user_id: string
+          weather: string | null
+          work_performed: string | null
+        }
+        Insert: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          incidents?: string | null
+          materials?: string | null
+          notes?: string | null
+          personnel?: string | null
+          site_id: string
+          temperature?: string | null
+          updated_at?: string
+          user_id: string
+          weather?: string | null
+          work_performed?: string | null
+        }
+        Update: {
+          created_at?: string
+          entry_date?: string
+          id?: string
+          incidents?: string | null
+          materials?: string | null
+          notes?: string | null
+          personnel?: string | null
+          site_id?: string
+          temperature?: string | null
+          updated_at?: string
+          user_id?: string
+          weather?: string | null
+          work_performed?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_diary_entries_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sites: {
+        Row: {
+          address: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sites_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
