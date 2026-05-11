@@ -5,6 +5,7 @@ export interface QuoteItem {
   unit: string;
   price: number;
   photo_path?: string | null;
+  sketch_path?: string | null;
 }
 
 export interface Quote {
