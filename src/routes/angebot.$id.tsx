@@ -728,6 +728,13 @@ function QuoteEditor() {
                     )}
                   </button>
                   <button
+                    onClick={() => setSketchItemId(item.id)}
+                    className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
+                    aria-label="Skizze zeichnen"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => removeItem(item.id)}
                     className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground"
                     aria-label="Position löschen"
@@ -735,9 +742,10 @@ function QuoteEditor() {
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-                {item.photo_path && (
-                  <div className="col-span-12 mt-2">
-                    <div className="relative inline-block">
+                {(item.photo_path || item.sketch_path) && (
+                  <div className="col-span-12 mt-2 flex flex-wrap gap-3">
+                    {item.photo_path && (
+                      <div className="relative inline-block">
                       {photoUrls[item.photo_path] ? (
                         <img
                           src={photoUrls[item.photo_path]}
@@ -756,7 +764,31 @@ function QuoteEditor() {
                       >
                         <X className="h-3 w-3" />
                       </button>
-                    </div>
+                      </div>
+                    )}
+                    {item.sketch_path && (
+                      <div className="relative inline-block">
+                        {photoUrls[item.sketch_path] ? (
+                          <img
+                            src={photoUrls[item.sketch_path]}
+                            alt={`Skizze ${idx + 1}`}
+                            className="h-32 w-32 object-contain bg-white rounded-lg border border-border cursor-pointer"
+                            onClick={() => setSketchItemId(item.id)}
+                          />
+                        ) : (
+                          <div className="h-32 w-32 rounded-lg border border-border bg-muted flex items-center justify-center">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          </div>
+                        )}
+                        <button
+                          onClick={() => removeSketch(item.id)}
+                          className="absolute -top-2 -right-2 p-1 rounded-full bg-background border border-border shadow hover:bg-muted"
+                          aria-label="Skizze entfernen"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -775,6 +807,19 @@ function QuoteEditor() {
       <p className="mt-4 text-xs text-muted-foreground text-right">
         Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmer).
       </p>
+
+      <SketchPad
+        open={sketchItemId !== null}
+        onOpenChange={(o) => { if (!o) setSketchItemId(null); }}
+        initialImageUrl={
+          sketchItemId
+            ? photoUrls[quote.items.find((i) => i.id === sketchItemId)?.sketch_path ?? ""] ?? null
+            : null
+        }
+        onSave={async (blob) => {
+          if (sketchItemId) await uploadSketch(sketchItemId, blob);
+        }}
+      />
 
     </AppShell>
   );
