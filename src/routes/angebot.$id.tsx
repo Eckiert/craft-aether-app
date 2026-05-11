@@ -28,11 +28,13 @@ import {
   Plus,
   Printer,
   Save,
+  Pencil,
   Trash2,
   UserPlus,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { SketchPad } from "@/components/SketchPad";
 
 export const Route = createFileRoute("/angebot/$id")({
   component: QuoteEditor,
@@ -60,6 +62,7 @@ function QuoteEditor() {
   const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [sketchItemId, setSketchItemId] = useState<string | null>(null);
   const [walkTalkOpen, setWalkTalkOpen] = useState(false);
   const [processingDictation, setProcessingDictation] = useState(false);
   const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
@@ -115,7 +118,10 @@ function QuoteEditor() {
   // Sign URLs for any item photos so we can preview them
   useEffect(() => {
     if (!quote) return;
-    const paths = quote.items.map((i) => i.photo_path).filter((p): p is string => !!p);
+    const paths = [
+      ...quote.items.map((i) => i.photo_path),
+      ...quote.items.map((i) => i.sketch_path),
+    ].filter((p): p is string => !!p);
     if (paths.length === 0) return;
     let active = true;
     (async () => {
@@ -138,7 +144,10 @@ function QuoteEditor() {
       active = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quote?.items.map((i) => i.photo_path).join("|")]);
+  }, [
+    quote?.items.map((i) => i.photo_path).join("|"),
+    quote?.items.map((i) => i.sketch_path).join("|"),
+  ]);
 
   const uploadPhoto = async (itemId: string, file: File) => {
     if (!user || !quote) return;
@@ -164,6 +173,30 @@ function QuoteEditor() {
     const path = quote?.items.find((i) => i.id === itemId)?.photo_path;
     if (path) await supabase.storage.from("quote-photos").remove([path]);
     updateItem(itemId, { photo_path: null });
+  };
+
+  const uploadSketch = async (itemId: string, blob: Blob) => {
+    if (!user || !quote) return;
+    setUploadingId(itemId);
+    const path = `${user.id}/${quote.id}/sketch-${itemId}-${Date.now()}.png`;
+    const { error } = await supabase.storage
+      .from("quote-photos")
+      .upload(path, blob, { upsert: true, contentType: "image/png" });
+    setUploadingId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const old = quote.items.find((i) => i.id === itemId)?.sketch_path;
+    if (old) await supabase.storage.from("quote-photos").remove([old]);
+    updateItem(itemId, { sketch_path: path });
+    toast.success("Skizze gespeichert");
+  };
+
+  const removeSketch = async (itemId: string) => {
+    const path = quote?.items.find((i) => i.id === itemId)?.sketch_path;
+    if (path) await supabase.storage.from("quote-photos").remove([path]);
+    updateItem(itemId, { sketch_path: null });
   };
 
   const update = (patch: Partial<Quote>) => {
