@@ -291,21 +291,26 @@ function QuoteEditor() {
     if (!quote) return;
     const ok = await save(true);
     if (!ok) return;
-    generateQuotePdf({ ...quote, total }, true);
+    // PDF als Datei herunterladen (damit es real auf dem Gerät liegt und angehängt werden kann)
+    await generateQuotePdf({ ...quote, total }, false);
     const bauleiterEmail = getBauleiterEmail();
-    if (bauleiterEmail) {
+    if (!bauleiterEmail) {
+      toast.message("PDF gespeichert. Tipp: Hinterlege eine Bauleiter-E-Mail in den Einstellungen, um direkt eine E-Mail zu öffnen.");
+      return;
+    }
+    // Kurze Verzögerung, damit der Download startet, bevor die Mail-App geöffnet wird
+    setTimeout(() => {
       const subject = `Angebot: ${quote.project_name || "Ohne Titel"}`;
       const body =
-        `Hallo,\n\nim Anhang das Angebot für ${quote.customer_name || "den Kunden"}` +
+        `Hallo,\n\nanbei das Angebot für ${quote.customer_name || "den Kunden"}` +
         ` (Projekt: ${quote.project_name || "-"}).\n\n` +
         `Gesamtsumme: ${formatEUR(total)}\n\n` +
-        `Bitte das soeben heruntergeladene PDF manuell anhängen.\n\nViele Grüße`;
+        `Hinweis: Bitte das soeben heruntergeladene PDF "Angebot-${quote.project_name || quote.id}.pdf" manuell anhängen – ` +
+        `mailto-Links erlauben technisch keine automatischen Anhänge.\n\nViele Grüße`;
       const mailto = `mailto:${encodeURIComponent(bauleiterEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       window.location.href = mailto;
-      toast.success(`E-Mail an ${bauleiterEmail} vorbereitet – PDF bitte anhängen.`);
-    } else {
-      toast.message("Tipp: Hinterlege eine Bauleiter-E-Mail in den Einstellungen, um das PDF direkt zu versenden.");
-    }
+      toast.success(`PDF gespeichert – E-Mail an ${bauleiterEmail} vorbereitet. Bitte PDF anhängen.`);
+    }, 800);
   };
 
   const transcribeBlob = async (blob: Blob): Promise<string> => {
