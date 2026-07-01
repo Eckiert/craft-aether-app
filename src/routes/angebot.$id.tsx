@@ -63,6 +63,7 @@ function QuoteEditor() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const [sketchItemId, setSketchItemId] = useState<string | null>(null);
+  const [photoEditItemId, setPhotoEditItemId] = useState<string | null>(null);
   const [walkTalkOpen, setWalkTalkOpen] = useState(false);
   const [processingDictation, setProcessingDictation] = useState(false);
   const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
