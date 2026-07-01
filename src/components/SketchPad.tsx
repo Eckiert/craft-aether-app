@@ -23,33 +23,69 @@ export function SketchPad({ open, onOpenChange, initialImageUrl, onSave }: Sketc
   const [erasing, setErasing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Initialize canvas when dialog opens
+  // Initialize canvas when dialog opens (and on resize/orientation change)
   useEffect(() => {
     if (!open) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    // High-DPI scaling
-    const rect = canvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, rect.width, rect.height);
-    historyRef.current = [];
-    if (initialImageUrl) {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+    let cancelled = false;
+
+    const init = () => {
+      const canvas = canvasRef.current;
+      if (!canvas || cancelled) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      // Use offset* (layout box, unaffected by CSS transforms from the
+      // opening dialog animation) so bitmap size matches the *final* CSS size.
+      const cssW = canvas.offsetWidth;
+      const cssH = canvas.offsetHeight;
+      if (cssW === 0 || cssH === 0) {
+        // Layout not ready yet – retry next frame.
+        requestAnimationFrame(init);
+        return;
+      }
+      const dpr = window.devicePixelRatio || 1;
+      // Preserve current drawing (if any) across resizes.
+      const prev = canvas.width && canvas.height
+        ? (() => {
+            try { return ctx.getImageData(0, 0, canvas.width, canvas.height); } catch { return null; }
+          })()
+        : null;
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, cssW, cssH);
+      historyRef.current = [];
+      if (initialImageUrl) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          if (cancelled) return;
+          ctx.drawImage(img, 0, 0, cssW, cssH);
+          pushHistory();
+        };
+        img.src = initialImageUrl;
+      } else if (prev) {
+        // no-op: prev was in old device pixels; safest is a blank white start.
         pushHistory();
-      };
-      img.src = initialImageUrl;
-    } else {
-      pushHistory();
-    }
+      } else {
+        pushHistory();
+      }
+    };
+
+    // Wait for the Radix dialog open animation (transform: scale) to finish
+    // so getBoundingClientRect / offset* reflect the final size.
+    const t = window.setTimeout(() => requestAnimationFrame(init), 180);
+
+    const onResize = () => requestAnimationFrame(init);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialImageUrl]);
 
@@ -62,8 +98,18 @@ export function SketchPad({ open, onOpenChange, initialImageUrl, onSave }: Sketc
   };
 
   const getPos = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const rect = canvasRef.current!.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    // Map from screen pixels back to the canvas' CSS coordinate space.
+    // If the canvas is displayed at a different size than its layout box
+    // (e.g. dialog animation still scaling), scale accordingly so the
+    // stroke lands under the finger/pointer.
+    const scaleX = canvas.offsetWidth / rect.width;
+    const scaleY = canvas.offsetHeight / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
