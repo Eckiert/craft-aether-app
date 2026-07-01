@@ -176,6 +176,24 @@ function QuoteEditor() {
     updateItem(itemId, { photo_path: null });
   };
 
+  const savePhotoEdit = async (itemId: string, blob: Blob) => {
+    if (!user || !quote) return;
+    setUploadingId(itemId);
+    const path = `${user.id}/${quote.id}/${itemId}-${Date.now()}.png`;
+    const { error } = await supabase.storage
+      .from("quote-photos")
+      .upload(path, blob, { upsert: true, contentType: "image/png" });
+    setUploadingId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const old = quote.items.find((i) => i.id === itemId)?.photo_path;
+    if (old) await supabase.storage.from("quote-photos").remove([old]);
+    updateItem(itemId, { photo_path: path });
+    toast.success("Foto bearbeitet");
+  };
+
   const uploadSketch = async (itemId: string, blob: Blob) => {
     if (!user || !quote) return;
     setUploadingId(itemId);
