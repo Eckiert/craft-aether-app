@@ -63,6 +63,7 @@ function QuoteEditor() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const [sketchItemId, setSketchItemId] = useState<string | null>(null);
+  const [photoEditItemId, setPhotoEditItemId] = useState<string | null>(null);
   const [walkTalkOpen, setWalkTalkOpen] = useState(false);
   const [processingDictation, setProcessingDictation] = useState(false);
   const [activeFieldKey, setActiveFieldKey] = useState<string | null>(null);
@@ -173,6 +174,24 @@ function QuoteEditor() {
     const path = quote?.items.find((i) => i.id === itemId)?.photo_path;
     if (path) await supabase.storage.from("quote-photos").remove([path]);
     updateItem(itemId, { photo_path: null });
+  };
+
+  const savePhotoEdit = async (itemId: string, blob: Blob) => {
+    if (!user || !quote) return;
+    setUploadingId(itemId);
+    const path = `${user.id}/${quote.id}/${itemId}-${Date.now()}.png`;
+    const { error } = await supabase.storage
+      .from("quote-photos")
+      .upload(path, blob, { upsert: true, contentType: "image/png" });
+    setUploadingId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const old = quote.items.find((i) => i.id === itemId)?.photo_path;
+    if (old) await supabase.storage.from("quote-photos").remove([old]);
+    updateItem(itemId, { photo_path: path });
+    toast.success("Foto bearbeitet");
   };
 
   const uploadSketch = async (itemId: string, blob: Blob) => {
@@ -755,13 +774,23 @@ function QuoteEditor() {
                         <img
                           src={photoUrls[item.photo_path]}
                           alt={`Foto ${idx + 1}`}
-                          className="h-32 w-32 object-cover rounded-lg border border-border"
+                          className="h-32 w-32 object-cover rounded-lg border border-border cursor-pointer"
+                          onClick={() => setPhotoEditItemId(item.id)}
+                          title="Zum Bearbeiten anklicken"
                         />
                       ) : (
                         <div className="h-32 w-32 rounded-lg border border-border bg-muted flex items-center justify-center">
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                         </div>
                       )}
+                      <button
+                        onClick={() => setPhotoEditItemId(item.id)}
+                        className="absolute -bottom-2 -right-2 p-1 rounded-full bg-background border border-border shadow hover:bg-muted"
+                        aria-label="Foto bearbeiten"
+                        title="Foto bearbeiten"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
                       <button
                         onClick={() => removePhoto(item.id)}
                         className="absolute -top-2 -right-2 p-1 rounded-full bg-background border border-border shadow hover:bg-muted"
@@ -823,6 +852,19 @@ function QuoteEditor() {
         }
         onSave={async (blob) => {
           if (sketchItemId) await uploadSketch(sketchItemId, blob);
+        }}
+      />
+
+      <SketchPad
+        open={photoEditItemId !== null}
+        onOpenChange={(o) => { if (!o) setPhotoEditItemId(null); }}
+        initialImageUrl={
+          photoEditItemId
+            ? photoUrls[quote.items.find((i) => i.id === photoEditItemId)?.photo_path ?? ""] ?? null
+            : null
+        }
+        onSave={async (blob) => {
+          if (photoEditItemId) await savePhotoEdit(photoEditItemId, blob);
         }}
       />
 
