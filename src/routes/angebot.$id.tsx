@@ -774,13 +774,23 @@ function QuoteEditor() {
                         <img
                           src={photoUrls[item.photo_path]}
                           alt={`Foto ${idx + 1}`}
-                          className="h-32 w-32 object-cover rounded-lg border border-border"
+                          className="h-32 w-32 object-cover rounded-lg border border-border cursor-pointer"
+                          onClick={() => setPhotoEditItemId(item.id)}
+                          title="Zum Bearbeiten anklicken"
                         />
                       ) : (
                         <div className="h-32 w-32 rounded-lg border border-border bg-muted flex items-center justify-center">
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                         </div>
                       )}
+                      <button
+                        onClick={() => setPhotoEditItemId(item.id)}
+                        className="absolute -bottom-2 -right-2 p-1 rounded-full bg-background border border-border shadow hover:bg-muted"
+                        aria-label="Foto bearbeiten"
+                        title="Foto bearbeiten"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
                       <button
                         onClick={() => removePhoto(item.id)}
                         className="absolute -top-2 -right-2 p-1 rounded-full bg-background border border-border shadow hover:bg-muted"
@@ -842,6 +852,19 @@ function QuoteEditor() {
         }
         onSave={async (blob) => {
           if (sketchItemId) await uploadSketch(sketchItemId, blob);
+        }}
+      />
+
+      <SketchPad
+        open={photoEditItemId !== null}
+        onOpenChange={(o) => { if (!o) setPhotoEditItemId(null); }}
+        initialImageUrl={
+          photoEditItemId
+            ? photoUrls[quote.items.find((i) => i.id === photoEditItemId)?.photo_path ?? ""] ?? null
+            : null
+        }
+        onSave={async (blob) => {
+          if (photoEditItemId) await savePhotoEdit(photoEditItemId, blob);
         }}
       />
 
