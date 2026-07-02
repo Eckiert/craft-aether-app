@@ -24,6 +24,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/" });
@@ -32,6 +33,7 @@ function LoginPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
+    setPending(false);
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
@@ -40,10 +42,41 @@ function LoginPage() {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        // Check approval status of the freshly created user
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user?.id;
+        if (uid) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("approved")
+            .eq("id", uid)
+            .maybeSingle();
+          if (!profile?.approved) {
+            await supabase.auth.signOut();
+            setPending(true);
+            toast.info("Konto erstellt. Warte auf Freischaltung durch den Admin.");
+            return;
+          }
+        }
         toast.success("Konto erstellt — du bist angemeldet.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user?.id;
+        if (uid) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("approved")
+            .eq("id", uid)
+            .maybeSingle();
+          if (!profile?.approved) {
+            await supabase.auth.signOut();
+            setPending(true);
+            toast.error("Dein Konto ist noch nicht freigeschaltet.");
+            return;
+          }
+        }
         toast.success("Willkommen zurück.");
       }
       navigate({ to: "/" });
@@ -72,6 +105,11 @@ function LoginPage() {
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-elegant)]">
+            {pending && (
+              <div className="rounded-md border border-border bg-muted p-3 text-sm text-muted-foreground">
+                Dein Konto wartet auf Freigabe durch den Administrator. Du erhältst Zugang, sobald es freigeschaltet wurde.
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">E-Mail</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@firma.de" />
