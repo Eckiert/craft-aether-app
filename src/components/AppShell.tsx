@@ -12,12 +12,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LogOut, FileText, Users, Settings as SettingsIcon, HardHat } from "lucide-react";
+import { LogOut, FileText, Users, Settings as SettingsIcon, HardHat, Shield } from "lucide-react";
 import { getBauleiterEmail, setBauleiterEmail } from "@/lib/settings";
 import { toast } from "sonner";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [emailInput, setEmailInput] = useState("");
@@ -74,6 +74,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <HardHat className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Baustelle</span>
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  activeProps={{ className: "text-foreground bg-muted" }}
+                  inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs sm:text-sm transition-colors"
+                >
+                  <Shield className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Link>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KundenRouteImport } from './routes/kunden'
 import { Route as BaustelleRouteImport } from './routes/baustelle'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranscribeRouteImport } from './routes/api.transcribe'
 import { Route as ApiParsePositionsRouteImport } from './routes/api.parse-positions'
@@ -30,6 +31,11 @@ const KundenRoute = KundenRouteImport.update({
 const BaustelleRoute = BaustelleRouteImport.update({
   id: '/baustelle',
   path: '/baustelle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -55,6 +61,7 @@ const AngebotIdRoute = AngebotIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/baustelle': typeof BaustelleRoute
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/baustelle': typeof BaustelleRoute
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/baustelle': typeof BaustelleRoute
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/baustelle'
     | '/kunden'
     | '/login'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/baustelle'
     | '/kunden'
     | '/login'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/baustelle'
     | '/kunden'
     | '/login'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   BaustelleRoute: typeof BaustelleRoute
   KundenRoute: typeof KundenRoute
   LoginRoute: typeof LoginRoute
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/baustelle'
       fullPath: '/baustelle'
       preLoaderRoute: typeof BaustelleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   BaustelleRoute: BaustelleRoute,
   KundenRoute: KundenRoute,
   LoginRoute: LoginRoute,
