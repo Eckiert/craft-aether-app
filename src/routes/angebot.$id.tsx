@@ -71,6 +71,64 @@ function QuoteEditor() {
   const recorder = useAudioRecorder();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [savingCustomer, setSavingCustomer] = useState(false);
+  const [customerVoiceRecording, setCustomerVoiceRecording] = useState(false);
+  const [customerVoiceProcessing, setCustomerVoiceProcessing] = useState(false);
+  const customerRecorder = useAudioRecorder();
+
+  const handleCustomerVoice = async () => {
+    if (customerVoiceProcessing) return;
+    if (customerRecorder.isRecording) {
+      const blob = await customerRecorder.stop();
+      setCustomerVoiceRecording(false);
+      if (!blob) return;
+      setCustomerVoiceProcessing(true);
+      try {
+        const fd = new FormData();
+        fd.append("audio", blob, "audio.webm");
+        const tRes = await fetch("/api/transcribe", { method: "POST", body: fd });
+        const tData = await tRes.json();
+        if (!tRes.ok) throw new Error(tData.error ?? "Transkription fehlgeschlagen");
+        const text = (tData.text ?? "").trim();
+        if (!text) {
+          toast.error("Keine Sprache erkannt");
+          return;
+        }
+        const pRes = await fetch("/api/parse-customer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        const pData = await pRes.json();
+        if (!pRes.ok) throw new Error(pData.error ?? "AI-Verarbeitung fehlgeschlagen");
+        setQuote((q) => {
+          if (!q) return q;
+          const contact = [pData.email?.trim(), pData.phone?.trim(), pData.notes?.trim()]
+            .filter(Boolean)
+            .join(" · ");
+          return {
+            ...q,
+            customer_id: null,
+            customer_name: pData.name?.trim() || q.customer_name,
+            customer_address: pData.address?.trim() || q.customer_address,
+            notes: contact
+              ? q.notes
+                ? q.notes + "\n" + contact
+                : contact
+              : q.notes,
+          };
+        });
+        toast.success("Kundendaten übernommen");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Fehler");
+      } finally {
+        setCustomerVoiceProcessing(false);
+      }
+    } else {
+      const res = await customerRecorder.start();
+      if (!res.ok) toast.error(res.error ?? "Mikrofon nicht verfügbar");
+      else setCustomerVoiceRecording(true);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -542,7 +600,29 @@ function QuoteEditor() {
         <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Kunde</h2>
-            {customers.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={customerVoiceRecording ? "destructive" : "outline"}
+                onClick={handleCustomerVoice}
+                disabled={customerVoiceProcessing}
+                className="h-8 gap-1.5 text-xs"
+              >
+                {customerVoiceProcessing ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : customerVoiceRecording ? (
+                  <MicOff className="h-3.5 w-3.5" />
+                ) : (
+                  <Mic className="h-3.5 w-3.5" />
+                )}
+                {customerVoiceProcessing
+                  ? "Verarbeite…"
+                  : customerVoiceRecording
+                    ? "Stopp"
+                    : "Diktieren"}
+              </Button>
+              {customers.length > 0 && (
               <Select
                 value={quote.customer_id ?? "__none__"}
                 onValueChange={selectCustomer}
@@ -559,7 +639,8 @@ function QuoteEditor() {
                   ))}
                 </SelectContent>
               </Select>
-            )}
+              )}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="cn">Name</Label>
