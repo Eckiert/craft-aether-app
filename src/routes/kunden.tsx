@@ -15,8 +15,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Customer } from "@/lib/types";
-import { Loader2, Plus, Trash2, Pencil, Users, Mail, Phone, MapPin, Search } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, Users, Mail, Phone, MapPin, Search, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
+import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 
 export const Route = createFileRoute("/kunden")({
   head: () => ({
@@ -48,6 +49,8 @@ function CustomersPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const recorder = useAudioRecorder();
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
@@ -142,6 +145,58 @@ function CustomersPage() {
     if (error) return toast.error(error.message);
     setCustomers((cs) => cs.filter((c) => c.id !== id));
     toast.success("Gelöscht");
+  };
+
+  const handleVoiceClick = async () => {
+    if (voiceProcessing) return;
+    if (recorder.isRecording) {
+      const blob = await recorder.stop();
+      if (!blob) return;
+      setVoiceProcessing(true);
+      try {
+        const fd = new FormData();
+        fd.append("audio", blob, "audio.webm");
+        const tRes = await fetch("/api/transcribe", { method: "POST", body: fd });
+        const tData = await tRes.json();
+        if (!tRes.ok) throw new Error(tData.error ?? "Transkription fehlgeschlagen");
+        const text = (tData.text ?? "").trim();
+        if (!text) {
+          toast.error("Keine Sprache erkannt");
+          return;
+        }
+        const pRes = await fetch("/api/parse-customer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        const pData = await pRes.json();
+        if (!pRes.ok) throw new Error(pData.error ?? "AI-Verarbeitung fehlgeschlagen");
+        setForm((f) => ({
+          name: pData.name?.trim() || f.name,
+          address: pData.address?.trim() || f.address,
+          email: pData.email?.trim() || f.email,
+          phone: pData.phone?.trim() || f.phone,
+          notes: pData.notes?.trim()
+            ? f.notes
+              ? f.notes + "\n" + pData.notes.trim()
+              : pData.notes.trim()
+            : f.notes,
+        }));
+        toast.success("Kundendaten übernommen");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Fehler");
+      } finally {
+        setVoiceProcessing(false);
+      }
+    } else {
+      const res = await recorder.start();
+      if (!res.ok) toast.error(res.error ?? "Mikrofon nicht verfügbar");
+    }
+  };
+
+  const handleDialogOpenChange = (next: boolean) => {
+    if (!next && recorder.isRecording) recorder.cancel();
+    setOpen(next);
   };
 
   if (loading || !user) {
@@ -244,11 +299,37 @@ function CustomersPage() {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleDialogOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editId ? "Kunde bearbeiten" : "Neuer Kunde"}</DialogTitle>
           </DialogHeader>
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
+            <Button
+              type="button"
+              size="sm"
+              variant={recorder.isRecording ? "destructive" : "secondary"}
+              onClick={handleVoiceClick}
+              disabled={voiceProcessing}
+              className="gap-2"
+            >
+              {voiceProcessing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : recorder.isRecording ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+              {voiceProcessing
+                ? "Verarbeite…"
+                : recorder.isRecording
+                  ? "Aufnahme stoppen"
+                  : "Per Sprache ausfüllen"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Diktiere Name, Adresse, E-Mail und Telefon — die Felder werden automatisch befüllt.
+            </p>
+          </div>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="c-name">Name *</Label>
