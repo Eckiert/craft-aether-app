@@ -16,6 +16,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranscribeRouteImport } from './routes/api.transcribe'
 import { Route as ApiParsePositionsRouteImport } from './routes/api.parse-positions'
+import { Route as ApiParseCustomerRouteImport } from './routes/api.parse-customer'
 import { Route as AngebotIdRouteImport } from './routes/angebot.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -53,6 +54,11 @@ const ApiParsePositionsRoute = ApiParsePositionsRouteImport.update({
   path: '/api/parse-positions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiParseCustomerRoute = ApiParseCustomerRouteImport.update({
+  id: '/api/parse-customer',
+  path: '/api/parse-customer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AngebotIdRoute = AngebotIdRouteImport.update({
   id: '/angebot/$id',
   path: '/angebot/$id',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
+  '/api/parse-customer': typeof ApiParseCustomerRoute
   '/api/parse-positions': typeof ApiParsePositionsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
+  '/api/parse-customer': typeof ApiParseCustomerRoute
   '/api/parse-positions': typeof ApiParsePositionsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/kunden': typeof KundenRoute
   '/login': typeof LoginRoute
   '/angebot/$id': typeof AngebotIdRoute
+  '/api/parse-customer': typeof ApiParseCustomerRoute
   '/api/parse-positions': typeof ApiParsePositionsRoute
   '/api/transcribe': typeof ApiTranscribeRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/kunden'
     | '/login'
     | '/angebot/$id'
+    | '/api/parse-customer'
     | '/api/parse-positions'
     | '/api/transcribe'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/kunden'
     | '/login'
     | '/angebot/$id'
+    | '/api/parse-customer'
     | '/api/parse-positions'
     | '/api/transcribe'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/kunden'
     | '/login'
     | '/angebot/$id'
+    | '/api/parse-customer'
     | '/api/parse-positions'
     | '/api/transcribe'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   KundenRoute: typeof KundenRoute
   LoginRoute: typeof LoginRoute
   AngebotIdRoute: typeof AngebotIdRoute
+  ApiParseCustomerRoute: typeof ApiParseCustomerRoute
   ApiParsePositionsRoute: typeof ApiParsePositionsRoute
   ApiTranscribeRoute: typeof ApiTranscribeRoute
 }
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiParsePositionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/parse-customer': {
+      id: '/api/parse-customer'
+      path: '/api/parse-customer'
+      fullPath: '/api/parse-customer'
+      preLoaderRoute: typeof ApiParseCustomerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/angebot/$id': {
       id: '/angebot/$id'
       path: '/angebot/$id'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   KundenRoute: KundenRoute,
   LoginRoute: LoginRoute,
   AngebotIdRoute: AngebotIdRoute,
+  ApiParseCustomerRoute: ApiParseCustomerRoute,
   ApiParsePositionsRoute: ApiParsePositionsRoute,
   ApiTranscribeRoute: ApiTranscribeRoute,
 }
