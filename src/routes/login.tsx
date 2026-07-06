@@ -42,41 +42,10 @@ function LoginPage() {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        // Check approval status of the freshly created user
-        const { data: sessionData } = await supabase.auth.getSession();
-        const uid = sessionData.session?.user?.id;
-        if (uid) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("approved")
-            .eq("id", uid)
-            .maybeSingle();
-          if (!profile?.approved) {
-            await supabase.auth.signOut();
-            setPending(true);
-            toast.info("Konto erstellt. Warte auf Freischaltung durch den Admin.");
-            return;
-          }
-        }
         toast.success("Konto erstellt — du bist angemeldet.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        const { data: sessionData } = await supabase.auth.getSession();
-        const uid = sessionData.session?.user?.id;
-        if (uid) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("approved")
-            .eq("id", uid)
-            .maybeSingle();
-          if (!profile?.approved) {
-            await supabase.auth.signOut();
-            setPending(true);
-            toast.error("Dein Konto ist noch nicht freigeschaltet.");
-            return;
-          }
-        }
         toast.success("Willkommen zurück.");
       }
       navigate({ to: "/" });
